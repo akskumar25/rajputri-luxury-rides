@@ -27,7 +27,7 @@ const items = [
   { to: "/admin/inquiries", label: "Inquiries", icon: Mail },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/admin/revenue", label: "Revenue", icon: IndianRupee },
-] as const;
+] as { to: string; label: string; icon: React.ComponentType<{ className?: string }>; exact?: boolean }[];
 
 export function AdminSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
