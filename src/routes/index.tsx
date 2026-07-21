@@ -51,8 +51,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Rajputri Tours & Travels — Premium Taxi in Chidambaram, Tamil Nadu" },
       { name: "description", content: "Book premium Sedan taxi from Chidambaram: Chennai/Trichy airport transfers, temple tour packages, outstation, one-way & round trips. Safe, comfortable, on-time." },
-      { property: "og:title", content: "Rajputri Tours & Travels — Your Trusted Travel Partner in Tamil Nadu" },
-      { property: "og:description", content: "Safe • Comfortable • On-Time • Affordable Sedan taxi services from Chidambaram." },
+      { property: "og:title", content: "Rajputri Tours & Travels — Premium Taxi in Chidambaram, Tamil Nadu" },
+      { property: "og:description", content: "Book premium Sedan taxi from Chidambaram: Chennai/Trichy airport transfers, temple tour packages, outstation, one-way & round trips. Safe, comfortable, on-time." },
     ],
   }),
   component: Index,
