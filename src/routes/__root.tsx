@@ -84,6 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Airport transfers, temple tours & outstation trips from Chidambaram. Clean Sedan. Professional drivers. 24×7 booking." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#0b1e3f" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
