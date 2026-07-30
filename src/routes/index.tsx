@@ -42,9 +42,9 @@ import tTiruvannamalai from "@/assets/temple-tiruvannamalai.jpg";
 import tSrirangam from "@/assets/temple-srirangam.jpg";
 import tKumbakonam from "@/assets/temple-kumbakonam.jpg";
 
-const PHONE = "+919999999999";
-const WHATSAPP = "919999999999";
-const EMAIL = "bookings@rajputritours.com";
+const PHONE = "+918489999568";
+const WHATSAPP = "918489999568";
+const EMAIL = "akskumar25@gmail.com";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -189,20 +189,42 @@ function Hero() {
             Safe · Comfortable · On-Time · Affordable Sedan taxi services for airport transfers,
             temple tours and outstation trips across South India.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href="#book"
-              className="inline-flex items-center gap-2 rounded-xl gradient-gold px-6 py-3.5 text-sm font-semibold text-gold-foreground shadow-gold hover:scale-[1.02] transition"
-            >
-              Book Your Ride <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href={`tel:${PHONE}`}
-              className="inline-flex items-center gap-2 rounded-xl glass px-6 py-3.5 text-sm font-semibold text-royal hover:bg-white transition"
-            >
-              <Phone className="h-4 w-4" /> Call Now
-            </a>
-          </div>
+          <div className="mt-8 grid grid-cols-2 gap-4 max-w-xl">
+
+  {/* Book Your Ride */}
+  <a
+    href="#book"
+    className="group inline-flex items-center justify-center gap-2 rounded-2xl gradient-gold px-6 py-4 text-sm font-bold text-gold-foreground shadow-gold hover:scale-105 hover:-translate-y-1 transition-all duration-300"
+  >
+    🚖 Book Your Ride
+    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+  </a>
+
+  {/* Travel Guide */}
+  <a
+    href="/travel-guide"
+    className="group inline-flex items-center justify-center gap-2 rounded-2xl glass px-6 py-4 text-sm font-semibold text-royal shadow-lg hover:bg-royal hover:text-white hover:-translate-y-1 transition-all duration-300"
+  >
+    📝 Travel Guide
+  </a>
+
+  {/* Hotels */}
+  <a
+    href="/hotels"
+    className="group inline-flex items-center justify-center gap-2 rounded-2xl glass px-6 py-4 text-sm font-semibold text-royal shadow-lg hover:bg-royal hover:text-white hover:-translate-y-1 transition-all duration-300"
+  >
+    🏨 Hotels
+  </a>
+
+  {/* Flights */}
+  <a
+    href="/flights"
+    className="group inline-flex items-center justify-center gap-2 rounded-2xl glass px-6 py-4 text-sm font-semibold text-royal shadow-lg hover:bg-royal hover:text-white hover:-translate-y-1 transition-all duration-300"
+  >
+    ✈️ Flights
+  </a>
+
+</div>
           <div className="mt-10 flex flex-wrap gap-6 text-white/90">
             {[
               ["10K+", "Happy Riders"],
@@ -250,9 +272,17 @@ function BookingBar() {
             <Field icon={<Calendar className="h-4 w-4" />} label="Date" type="date" />
             <Field icon={<Clock className="h-4 w-4" />} label="Time" type="time" />
             <Field icon={<Users className="h-4 w-4" />} label="Passengers" type="number" placeholder="2" />
-            <button className="h-full min-h-14 rounded-xl gradient-gold text-gold-foreground font-semibold shadow-gold hover:opacity-95 transition inline-flex items-center justify-center gap-2">
-              Book Ride <ArrowRight className="h-4 w-4" />
-            </button>
+           <button
+  onClick={() =>
+    window.open(
+      "https://wa.me/918489999568?text=Hello%20Rajputri%20Travels,%20I%20want%20to%20book%20a%20ride.",
+      "_blank"
+    )
+  }
+  className="h-full min-h-14 rounded-xl gradient-gold text-gold-foreground font-semibold shadow-gold hover:opacity-95 transition inline-flex items-center justify-center gap-2"
+>
+  Book Ride <ArrowRight className="h-4 w-4" />
+</button>
           </div>
           <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
             <BadgeCheck className="h-4 w-4 text-royal" />
@@ -378,9 +408,9 @@ function TemplePackages() {
 /* ---------------- Popular Routes ---------------- */
 function PopularRoutes() {
   const routes = [
-    ["Chennai Airport", "160 km", "₹3,800"],
+    ["Chennai Airport", "203 km", "₹6,500"],
     ["Trichy Airport", "170 km", "₹4,000"],
-    ["Pondicherry", "70 km", "₹1,800"],
+    ["Pondicherry", "70 km", "₹3,000"],
     ["Mahabalipuram", "220 km", "₹4,800"],
     ["Kumbakonam", "60 km", "₹1,600"],
     ["Thanjavur", "95 km", "₹2,400"],
@@ -428,7 +458,7 @@ function Airport() {
           </p>
           <div className="mt-6 grid sm:grid-cols-2 gap-3">
             {[
-              ["Chennai (MAA)", "160 km · 3h", "₹3,800"],
+              ["Chennai (MAA)", "203 km · 3h", "₹6,00"],
               ["Trichy (TRZ)", "170 km · 3h", "₹4,000"],
               ["Pondicherry (PNY)", "70 km · 1.5h", "₹1,800"],
               ["Bengaluru (BLR)", "480 km · 8h", "₹11,500"],
