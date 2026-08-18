@@ -357,14 +357,14 @@ function Services() {
 /* ---------------- Temple Packages ---------------- */
 function TemplePackages() {
   const packages = [
-    { name: "Chidambaram Nataraja", img: tChidambaram, from: "₹1,500", days: "Half day" },
-    { name: "Velankanni Church", img: tVelankanni, from: "₹4,500", days: "1 day" },
-    { name: "Palani Murugan", img: tPalani, from: "₹6,500", days: "2 days" },
-    { name: "Rameswaram", img: tRameswaram, from: "₹8,500", days: "2 days" },
-    { name: "Thanjavur Big Temple", img: tThanjavur, from: "₹3,500", days: "1 day" },
-    { name: "Kumbakonam Navagraha", img: tKumbakonam, from: "₹4,000", days: "1 day" },
-    { name: "Tiruvannamalai", img: tTiruvannamalai, from: "₹4,800", days: "1 day" },
-    { name: "Srirangam", img: tSrirangam, from: "₹4,200", days: "1 day" },
+    { name: "Chidambaram Nataraja", img: tChidambaram, days: "Half day" },
+    { name: "Velankanni Church", img: tVelankanni, days: "1 day" },
+    { name: "Palani Murugan", img: tPalani, days: "2 days" },
+    { name: "Rameswaram", img: tRameswaram, days: "2 days" },
+    { name: "Thanjavur Big Temple", img: tThanjavur, days: "1 day" },
+    { name: "Kumbakonam Navagraha", img: tKumbakonam, days: "1 day" },
+    { name: "Tiruvannamalai", img: tTiruvannamalai, days: "1 day" },
+    { name: "Srirangam", img: tSrirangam, days: "1 day" },
   ];
   return (
     <SectionShell id="packages" eyebrow="Divine journeys" title="Temple tour packages" tinted>
@@ -412,10 +412,10 @@ function PopularRoutes() {
     ["Trichy Airport", "170 km", "₹4,000"],
     ["Pondicherry", "70 km", "₹3,000"],
     ["Mahabalipuram", "220 km", "₹4,800"],
-    ["Kumbakonam", "60 km", "₹1,600"],
-    ["Thanjavur", "95 km", "₹2,400"],
+    ["Kumbakonam", "79 km", "₹3,600"],
+    ["Thanjavur", "110 km", "₹4,500"],
     ["Rameswaram", "340 km", "₹8,500"],
-    ["Madurai", "250 km", "₹5,500"],
+    ["Madurai", "250 km", "₹7,000"],
   ];
   return (
     <SectionShell id="pricing" eyebrow="Transparent pricing" title="Popular routes from Chidambaram">
@@ -458,9 +458,9 @@ function Airport() {
           </p>
           <div className="mt-6 grid sm:grid-cols-2 gap-3">
             {[
-              ["Chennai (MAA)", "203 km · 3h", "₹6,00"],
+              ["Chennai (MAA)", "212 km · 3h", "₹6,500"],
               ["Trichy (TRZ)", "170 km · 3h", "₹4,000"],
-              ["Pondicherry (PNY)", "70 km · 1.5h", "₹1,800"],
+              ["Pondicherry (PNY)", "70 km · 1.5h", "₹3,000"],
               ["Bengaluru (BLR)", "480 km · 8h", "₹11,500"],
             ].map(([n, m, p]) => (
               <div key={n} className="glass rounded-2xl p-4 shadow-soft">
