@@ -458,10 +458,10 @@ function Airport() {
           </p>
           <div className="mt-6 grid sm:grid-cols-2 gap-3">
             {[
-              ["CDM To Chennai (MAA)"],
-              ["CDM To Trichy (TRZ)"],
-              ["CDM To Pondicherry (PNY)"],
-              ["CDM To Bengaluru (BLR)"],
+            ["Chidambaram To Chennai (MAA)"],
+["Chidambaram To Trichy (TRZ)"],
+["Chidambaram To Pondicherry (PNY)"],
+["Chidambaram To Bengaluru (BLR)"],
             ].map(([n, m, p]) => (
               <div key={n} className="glass rounded-2xl p-4 shadow-soft">
                 <div className="flex items-center gap-2 text-royal font-semibold">
