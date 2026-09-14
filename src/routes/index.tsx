@@ -452,21 +452,34 @@ function Airport() {
         <div className="rounded-3xl overflow-hidden shadow-elegant">
           <img src={airportPickup} alt="Airport pickup" width={1200} height={800} loading="lazy" className="w-full h-full object-cover" />
         </div>
-        <div>
-          <p className="text-muted-foreground leading-relaxed">
-            “Travel with confidence. Our professional driver will be ready to assist you with a smooth and comfortable airport transfer. We value your time and ensure a reliable, hassle-free journey from pickup to destination.”
-          </p>
-          <div className="mt-6 grid sm:grid-cols-2 gap-3">
-            {[
-            ["Chidambaram To Chennai (MAA)"],
-["Chidambaram To Trichy (TRZ)"],
-["Chidambaram To Pondicherry (PNY)"],
-["Chidambaram To Bengaluru (BLR)"],
-            ].map(([n, m, p]) => (
-              <div key={n} className="glass rounded-2xl p-4 shadow-soft">
-                <div className="flex items-center gap-2 text-royal font-semibold">
-                  <Plane className="h-4 w-4" /> {n}
-                </div>
+     <div>
+  <p className="text-muted-foreground leading-relaxed">
+    “Travel with confidence. Our professional driver will be ready to assist you with a smooth and comfortable airport transfer. We value your time and ensure a reliable, hassle-free journey from pickup to destination.”
+  </p>
+
+  <div className="mt-6 grid sm:grid-cols-2 gap-3">
+    {[
+      ["Chidambaram To Chennai (MAA)", "212 km · 3h", "₹7,000"],
+      ["Chidambaram To Trichy (TRZ)", "170 km · 3h", "₹5,000"],
+      ["Chidambaram To Pondicherry (PNY)", "70 km · 1.5h", "₹3,000"],
+      ["Chidambaram To Bengaluru (BLR)", "480 km · 8h", "₹11,500"],
+    ].map(([n, m, p]) => (
+      <div key={n} className="glass rounded-2xl p-4 shadow-soft">
+        <div className="flex items-center gap-2 text-royal font-semibold">
+          <Plane className="h-4 w-4" /> {n}
+        </div>
+
+        <div className="text-sm text-muted-foreground mt-1">
+          {m}
+        </div>
+
+        <div className="text-lg font-bold mt-2">
+          {p}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
                 <div className="mt-1 flex items-end justify-between">
                   <span className="text-xs text-muted-foreground">{m}</span>
                   <span className="text-gold font-bold">{p}</span>
