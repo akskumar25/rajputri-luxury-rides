@@ -454,15 +454,14 @@ function Airport() {
         </div>
         <div>
           <p className="text-muted-foreground leading-relaxed">
-            Land relaxed. Our chauffeur tracks your flight and waits at arrivals with a name board.
-            Complimentary 45 minutes of waiting time on every airport pickup.
+            “Travel with confidence. Our professional driver will be ready to assist you with a smooth and comfortable airport transfer. We value your time and ensure a reliable, hassle-free journey from pickup to destination.”
           </p>
           <div className="mt-6 grid sm:grid-cols-2 gap-3">
             {[
-              ["Chennai (MAA)", "212 km · 3h", "₹6,500"],
-              ["Trichy (TRZ)", "170 km · 3h", "₹4,000"],
-              ["Pondicherry (PNY)", "70 km · 1.5h", "₹3,000"],
-              ["Bengaluru (BLR)", "480 km · 8h", "₹11,500"],
+              ["CDM To Chennai (MAA)"],
+              ["CDM To Trichy (TRZ)"],
+              ["CDM To Pondicherry (PNY)"],
+              ["CDM To Bengaluru (BLR)"],
             ].map(([n, m, p]) => (
               <div key={n} className="glass rounded-2xl p-4 shadow-soft">
                 <div className="flex items-center gap-2 text-royal font-semibold">
