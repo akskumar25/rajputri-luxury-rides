@@ -531,10 +531,30 @@ function WhyUs() {
 /* ---------------- Pricing Card ---------------- */
 function Pricing() {
   const tiers = [
-    { label: "One Way", price: "₹13", per: "/ km", note: "Min 130 km · Toll & permit extra" },
-    { label: "Round Trip", price: "₹11", per: "/ km", note: "Min 250 km/day · Driver bata ₹400" },
-    { label: "Local (8 hr / 80 km)", price: "₹2,400", per: "flat", note: "Extra ₹12/km · ₹150/hr" },
-    { label: "Outstation Multi-day", price: "₹11", per: "/ km", note: "Custom itinerary · Best value" },
+  { 
+  label: "One Way",
+  price: "₹20",
+  per: "/ km",
+  note: "Min 130 km · Toll & permit extra"
+},
+{ 
+  label: "Round Trip",
+  price: "₹15",
+  per: "/ km",
+  note: "Min 250 km/day · Toll extra"
+},
+{ 
+  label: "Local (8 hr / 80 km)",
+  price: "₹2,400",
+  per: "flat",
+  note: "Extra ₹15/km · ₹150/hr"
+},
+{ 
+  label: "Outstation Multi-day",
+  price: "₹15",
+  per: "/ km",
+  note: "Custom itinerary · Toll extra"
+},
   ];
   return (
     <SectionShell eyebrow="Simple pricing" title="Sedan fares at a glance" tinted>
