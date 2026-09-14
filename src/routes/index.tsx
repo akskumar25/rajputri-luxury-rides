@@ -408,14 +408,15 @@ function TemplePackages() {
 /* ---------------- Popular Routes ---------------- */
 function PopularRoutes() {
   const routes = [
-    ["Chennai Airport", "203 km", "₹6,500"],
-    ["Trichy Airport", "170 km", "₹4,000"],
-    ["Pondicherry", "70 km", "₹3,000"],
-    ["Mahabalipuram", "220 km", "₹4,800"],
-    ["Kumbakonam", "79 km", "₹3,600"],
-    ["Thanjavur", "110 km", "₹4,500"],
-    ["Rameswaram", "340 km", "₹8,500"],
-    ["Madurai", "250 km", "₹7,000"],
+    ["CDM To Chennai Airport", "424 km", "₹7,000"],
+    ["CDM To Trichy Airport", "312 km", "₹5,000"],
+    ["CDM To Pondicherry", "137.6 km", "₹3,000"],
+    ["CDM To Mahabalipuram", "326 km", "₹5,200"],
+    ["CDM To Kumbakonam", "145 km", "₹3,500"],
+    ["CDM To Thanjavur", "220 km", "₹4,300"],
+    ["CDM To Rameswaram", "708 km", "₹11,000"],
+    ["CDM To Madurai", "554 km", "₹8,500"],
+    ["CDM To Kalahasti", "684 km", "₹11,500"],
   ];
   return (
     <SectionShell id="pricing" eyebrow="Transparent pricing" title="Popular routes from Chidambaram">
