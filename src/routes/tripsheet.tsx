@@ -1,729 +1,1133 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import {
-  Car,
-  User,
-  Phone,
-  MapPin,
-  Calendar,
-  Clock,
-  FileText,
-  IndianRupee,
-  MessageCircle,
-  Printer,
-  RotateCcw,
-  ShieldCheck,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/tripsheet")({
   component: TripSheet,
 });
 
+type TripType =
+  | "One Way"
+  | "Round Trip"
+  | "Airport Pickup"
+  | "Airport Drop"
+  | "Temple Tour"
+  | "Local"
+  | "Outstation";
+
 function TripSheet() {
-  const [tripNo] = useState(() => {
-    const current = Number(
-      localStorage.getItem("rajputri-trip-number") || "0"
-    ) + 1;
+  const [tripNo, setTripNo] = useState("RT-0001");
+  const [date, setDate] = useState("");
 
-    localStorage.setItem(
-      "rajputri-trip-number",
-      String(current)
-    );
-
-    return `RT-${new Date().getFullYear()}-${String(current).padStart(4, "0")}`;
-  });
-
-  const [date, setDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-
-  const [customer, setCustomer] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [customerMobile, setCustomerMobile] = useState("");
+
   const [pickup, setPickup] = useState("");
   const [drop, setDrop] = useState("");
-  const [tripType, setTripType] = useState("One Way");
+
+  const [tripType, setTripType] = useState<TripType>("One Way");
+  const [reportingTime, setReportingTime] = useState("");
 
   const [vehicleNo, setVehicleNo] = useState("");
-  const [vehicleType, setVehicleType] = useState("Sedan");
-  const [driver, setDriver] = useState("");
+  const [vehicleType, setVehicleType] = useState("Hyundai Prime SD CNG");
+
+  const [driverName, setDriverName] = useState("");
   const [driverMobile, setDriverMobile] = useState("");
 
   const [startKm, setStartKm] = useState("");
-  const [closeKm, setCloseKm] = useState("");
+  const [closingKm, setClosingKm] = useState("");
 
   const [vehicleCharge, setVehicleCharge] = useState("");
   const [toll, setToll] = useState("");
   const [parking, setParking] = useState("");
   const [permit, setPermit] = useState("");
-  const [bata, setBata] = useState("");
-  const [other, setOther] = useState("");
+  const [driverBata, setDriverBata] = useState("");
+  const [otherCharge, setOtherCharge] = useState("");
 
-  const totalKm =
-    Math.max(
-      0,
-      Number(closeKm || 0) - Number(startKm || 0)
-    );
+  const [notes, setNotes] = useState("");
 
-  const totalAmount =
-    Number(vehicleCharge || 0) +
-    Number(toll || 0) +
-    Number(parking || 0) +
-    Number(permit || 0) +
-    Number(bata || 0) +
-    Number(other || 0);
+  /* --------------------------------
+     Initial Trip Number + Date
+  --------------------------------- */
 
-  const money = (value: number) =>
-    `₹${value.toLocaleString("en-IN")}`;
+  useEffect(() => {
+    try {
+      const savedNumber = localStorage.getItem("rajputri-trip-number");
 
-  const resetForm = () => {
-    window.location.reload();
+      if (savedNumber) {
+        const nextNumber = Number(savedNumber) + 1;
+        setTripNo(`RT-${String(nextNumber).padStart(4, "0")}`);
+      } else {
+        setTripNo("RT-0001");
+      }
+    } catch {
+      setTripNo("RT-0001");
+    }
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+
+    setDate(`${yyyy}-${mm}-${dd}`);
+  }, []);
+
+  /* --------------------------------
+     Calculations
+  --------------------------------- */
+
+  const totalKm = useMemo(() => {
+    const start = Number(startKm);
+    const end = Number(closingKm);
+
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      return 0;
+    }
+
+    if (end < start) {
+      return 0;
+    }
+
+    return end - start;
+  }, [startKm, closingKm]);
+
+  const totalCharges = useMemo(() => {
+    const values = [
+      vehicleCharge,
+      toll,
+      parking,
+      permit,
+      driverBata,
+      otherCharge,
+    ];
+
+    return values.reduce((total, value) => {
+      const amount = Number(value);
+
+      if (!Number.isFinite(amount)) {
+        return total;
+      }
+
+      return total + amount;
+    }, 0);
+  }, [
+    vehicleCharge,
+    toll,
+    parking,
+    permit,
+    driverBata,
+    otherCharge,
+  ]);
+
+  /* --------------------------------
+     Helpers
+  --------------------------------- */
+
+  const formatDate = (value: string) => {
+    if (!value) return "";
+
+    const parts = value.split("-");
+
+    if (parts.length !== 3) {
+      return value;
+    }
+
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  };
+
+  const money = (value: number) => {
+    return `₹${value.toLocaleString("en-IN")}`;
+  };
+
+  const saveTripNumber = () => {
+    const current = Number(tripNo.replace("RT-", ""));
+
+    if (Number.isFinite(current)) {
+      localStorage.setItem(
+        "rajputri-trip-number",
+        String(current),
+      );
+    }
   };
 
   const printTripSheet = () => {
+    saveTripNumber();
     window.print();
   };
 
-  const shareWhatsApp = () => {
+  const createWhatsAppMessage = () => {
     const message = `
 RAJPUTRI TRAVELS
-Trip Sheet: ${tripNo}
+TRIP SHEET
 
-Date: ${date}
-Customer: ${customer}
-Mobile: ${customerMobile}
+Trip No: ${tripNo}
+Date: ${formatDate(date)}
 
-Pickup: ${pickup}
-Drop: ${drop}
+Customer: ${customerName || "-"}
+Mobile: ${customerMobile || "-"}
+
 Trip Type: ${tripType}
+Pickup: ${pickup || "-"}
+Drop: ${drop || "-"}
+Reporting Time: ${reportingTime || "-"}
 
-Vehicle: ${vehicleNo}
-Driver: ${driver}
+Vehicle No: ${vehicleNo || "-"}
+Vehicle: ${vehicleType || "-"}
+Driver: ${driverName || "-"}
+Driver Mobile: ${driverMobile || "-"}
 
-Starting KM: ${startKm}
-Closing KM: ${closeKm}
+Start KM: ${startKm || "-"}
+Closing KM: ${closingKm || "-"}
 Total KM: ${totalKm}
 
-Total Amount: ${money(totalAmount)}
+Vehicle Charge: ${money(Number(vehicleCharge) || 0)}
+Toll: ${money(Number(toll) || 0)}
+Parking: ${money(Number(parking) || 0)}
+Permit: ${money(Number(permit) || 0)}
+Driver Bata: ${money(Number(driverBata) || 0)}
+Other: ${money(Number(otherCharge) || 0)}
 
-Founder: SASIKUMAR KUPPUSAMMY
+TOTAL: ${money(totalCharges)}
+
+RAJPUTRI TRAVELS
+Founder: SASIKUMAR KUPPUSAMY
 Phone: 8489999568
 www.rajputritravels.com
 blog.rajputritravels.com
 `.trim();
 
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+    return message;
+  };
+
+  const shareWhatsApp = () => {
+    const message = createWhatsAppMessage();
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const resetForm = () => {
+    setCustomerName("");
+    setCustomerMobile("");
+    setPickup("");
+    setDrop("");
+    setTripType("One Way");
+    setReportingTime("");
+    setVehicleNo("");
+    setVehicleType("Hyundai Prime SD CNG");
+    setDriverName("");
+    setDriverMobile("");
+    setStartKm("");
+    setClosingKm("");
+    setVehicleCharge("");
+    setToll("");
+    setParking("");
+    setPermit("");
+    setDriverBata("");
+    setOtherCharge("");
+    setNotes("");
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+
+    setDate(`${yyyy}-${mm}-${dd}`);
+
+    try {
+      const saved = localStorage.getItem(
+        "rajputri-trip-number",
+      );
+
+      const next = saved ? Number(saved) + 1 : 1;
+
+      setTripNo(`RT-${String(next).padStart(4, "0")}`);
+    } catch {
+      setTripNo("RT-0001");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-secondary/40 text-foreground">
+    <>
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
 
-      {/* HEADER */}
-      <header className="print:hidden bg-royal text-white">
-        <div className="mx-auto max-w-5xl px-4 py-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-xl gradient-gold text-gold-foreground">
-              <Car className="h-6 w-6" />
-            </div>
+        body {
+          margin: 0;
+        }
 
-            <div>
-              <h1 className="font-display text-2xl font-bold">
-                RAJPUTRI TRAVELS
-              </h1>
+        .trip-page {
+          min-height: 100vh;
+          background: #f4f6f9;
+          padding: 24px 14px 60px;
+          font-family: Arial, Helvetica, sans-serif;
+          color: #172033;
+        }
 
-              <p className="text-xs text-white/70">
-                Professional Travel & Cab Services
+        .trip-container {
+          width: 100%;
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+
+        .trip-header {
+          background: linear-gradient(135deg, #071b3a, #183b72);
+          color: white;
+          border-radius: 18px;
+          padding: 24px;
+          margin-bottom: 20px;
+          box-shadow: 0 10px 30px rgba(0,0,0,.12);
+        }
+
+        .trip-header h1 {
+          margin: 0 0 6px;
+          font-size: 28px;
+        }
+
+        .trip-header p {
+          margin: 4px 0;
+          opacity: .9;
+        }
+
+        .trip-card {
+          background: white;
+          border-radius: 18px;
+          padding: 20px;
+          margin-bottom: 18px;
+          box-shadow: 0 5px 20px rgba(0,0,0,.07);
+        }
+
+        .section-title {
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 16px;
+          color: #122d5b;
+          border-bottom: 2px solid #e9edf4;
+          padding-bottom: 10px;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 15px;
+        }
+
+        .field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .field.full {
+          grid-column: 1 / -1;
+        }
+
+        .field label {
+          font-size: 13px;
+          font-weight: 700;
+          color: #475569;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+          width: 100%;
+          border: 1px solid #d7dce5;
+          border-radius: 10px;
+          padding: 12px;
+          font-size: 15px;
+          outline: none;
+          background: white;
+        }
+
+        .field textarea {
+          min-height: 90px;
+          resize: vertical;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+          border-color: #315fa8;
+          box-shadow: 0 0 0 3px rgba(49,95,168,.10);
+        }
+
+        .total-box {
+          background: #f1f6ff;
+          border: 1px solid #d7e4fb;
+          border-radius: 14px;
+          padding: 18px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 15px;
+          margin-top: 18px;
+        }
+
+        .total-label {
+          font-size: 14px;
+          color: #526071;
+        }
+
+        .total-value {
+          font-size: 28px;
+          font-weight: 800;
+          color: #102f62;
+        }
+
+        .button-row {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+        }
+
+        .action-button {
+          border: 0;
+          border-radius: 12px;
+          padding: 14px 12px;
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .print-button {
+          background: #122f61;
+          color: white;
+        }
+
+        .whatsapp-button {
+          background: #168a48;
+          color: white;
+        }
+
+        .reset-button {
+          background: #eef1f5;
+          color: #263448;
+        }
+
+        .sheet {
+          background: white;
+          border: 2px solid #172b4d;
+          padding: 28px;
+          max-width: 900px;
+          margin: 0 auto;
+          position: relative;
+        }
+
+        .sheet-top {
+          display: flex;
+          justify-content: space-between;
+          gap: 20px;
+          border-bottom: 2px solid #172b4d;
+          padding-bottom: 18px;
+          margin-bottom: 18px;
+        }
+
+        .company-name {
+          font-size: 28px;
+          font-weight: 900;
+          color: #102e60;
+        }
+
+        .company-info {
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .trip-number {
+          text-align: right;
+          font-weight: 700;
+        }
+
+        .sheet-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 18px;
+        }
+
+        .sheet-table th,
+        .sheet-table td {
+          border: 1px solid #aeb7c5;
+          padding: 9px;
+          text-align: left;
+          font-size: 13px;
+        }
+
+        .sheet-table th {
+          background: #eef2f7;
+          font-weight: 700;
+        }
+
+        .seal-sign {
+          display: flex;
+          justify-content: space-between;
+          align-items: end;
+          gap: 30px;
+          margin-top: 45px;
+        }
+
+        .seal {
+          width: 105px;
+          height: 105px;
+          border: 3px solid #172f61;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          font-size: 11px;
+          font-weight: 800;
+          color: #172f61;
+          transform: rotate(-8deg);
+        }
+
+        .signature {
+          text-align: center;
+          min-width: 190px;
+        }
+
+        .signature-line {
+          border-bottom: 1px solid #333;
+          margin-bottom: 7px;
+          height: 35px;
+        }
+
+        .sheet-footer {
+          border-top: 1px solid #c8ced8;
+          padding-top: 12px;
+          margin-top: 25px;
+          text-align: center;
+          font-size: 11px;
+          color: #596579;
+        }
+
+        @media (max-width: 700px) {
+          .grid {
+            grid-template-columns: 1fr;
+          }
+
+          .field.full {
+            grid-column: auto;
+          }
+
+          .button-row {
+            grid-template-columns: 1fr;
+          }
+
+          .sheet {
+            padding: 15px;
+          }
+
+          .sheet-top {
+            flex-direction: column;
+          }
+
+          .trip-number {
+            text-align: left;
+          }
+
+          .company-name {
+            font-size: 22px;
+          }
+
+          .seal-sign {
+            flex-direction: column;
+            align-items: center;
+          }
+        }
+
+        @media print {
+          body {
+            background: white !important;
+          }
+
+          .no-print {
+            display: none !important;
+          }
+
+          .trip-page {
+            padding: 0 !important;
+            background: white !important;
+          }
+
+          .sheet {
+            border: 2px solid #172b4d;
+            max-width: none;
+            width: 100%;
+            box-shadow: none;
+          }
+        }
+      `}</style>
+
+      <div className="trip-page">
+        <div className="trip-container">
+
+          {/* ======================================
+              FORM
+          ======================================= */}
+
+          <div className="no-print">
+            <div className="trip-header">
+              <h1>RAJPUTRI TRAVELS</h1>
+              <p>Digital Trip Sheet Management</p>
+              <p>
+                8489999568 · www.rajputritravels.com
               </p>
             </div>
-          </div>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
+            <div className="trip-card">
+              <h2 className="section-title">
+                Trip Information
+              </h2>
 
-        {/* PAGE TITLE */}
-        <div className="print:hidden mb-5">
-          <div className="flex items-center gap-2 text-gold text-xs font-bold uppercase tracking-widest">
-            <FileText className="h-4 w-4" />
-            Trip Management
-          </div>
+              <div className="grid">
 
-          <h2 className="mt-2 font-display text-3xl font-bold text-royal">
-            Trip Sheet
-          </h2>
+                <div className="field">
+                  <label>Trip Number</label>
+                  <input
+                    type="text"
+                    value={tripNo}
+                    readOnly
+                  />
+                </div>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create a professional trip sheet and share it with your customer.
-          </p>
-        </div>
+                <div className="field">
+                  <label>Date</label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) =>
+                      setDate(e.target.value)
+                    }
+                  />
+                </div>
 
-        {/* FORM */}
-        <div className="print:hidden space-y-5">
+                <div className="field">
+                  <label>Customer Name</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) =>
+                      setCustomerName(e.target.value)
+                    }
+                    placeholder="Customer name"
+                  />
+                </div>
 
-          {/* Trip Information */}
-          <Section title="Trip Information">
+                <div className="field">
+                  <label>Customer Mobile</label>
+                  <input
+                    type="tel"
+                    value={customerMobile}
+                    onChange={(e) =>
+                      setCustomerMobile(e.target.value)
+                    }
+                    placeholder="Mobile number"
+                  />
+                </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
+                <div className="field">
+                  <label>Trip Type</label>
+                  <select
+                    value={tripType}
+                    onChange={(e) =>
+                      setTripType(
+                        e.target.value as TripType,
+                      )
+                    }
+                  >
+                    <option>One Way</option>
+                    <option>Round Trip</option>
+                    <option>Airport Pickup</option>
+                    <option>Airport Drop</option>
+                    <option>Temple Tour</option>
+                    <option>Local</option>
+                    <option>Outstation</option>
+                  </select>
+                </div>
 
-              <Input
-                label="Trip Sheet No."
-                value={tripNo}
-                readOnly
-                icon={<FileText className="h-4 w-4" />}
-              />
+                <div className="field">
+                  <label>Reporting Time</label>
+                  <input
+                    type="time"
+                    value={reportingTime}
+                    onChange={(e) =>
+                      setReportingTime(e.target.value)
+                    }
+                  />
+                </div>
 
-              <Input
-                label="Trip Date"
-                type="date"
-                value={date}
-                onChange={setDate}
-                icon={<Calendar className="h-4 w-4" />}
-              />
+                <div className="field">
+                  <label>Pickup Location</label>
+                  <input
+                    type="text"
+                    value={pickup}
+                    onChange={(e) =>
+                      setPickup(e.target.value)
+                    }
+                    placeholder="Pickup location"
+                  />
+                </div>
 
+                <div className="field">
+                  <label>Drop Location</label>
+                  <input
+                    type="text"
+                    value={drop}
+                    onChange={(e) =>
+                      setDrop(e.target.value)
+                    }
+                    placeholder="Destination"
+                  />
+                </div>
+
+              </div>
             </div>
-          </Section>
 
-          {/* Customer */}
-          <Section title="Customer Details">
+            <div className="trip-card">
+              <h2 className="section-title">
+                Vehicle & Driver
+              </h2>
 
-            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid">
 
-              <Input
-                label="Customer Name"
-                value={customer}
-                onChange={setCustomer}
-                placeholder="Customer name"
-                icon={<User className="h-4 w-4" />}
-              />
+                <div className="field">
+                  <label>Vehicle Number</label>
+                  <input
+                    type="text"
+                    value={vehicleNo}
+                    onChange={(e) =>
+                      setVehicleNo(e.target.value)
+                    }
+                    placeholder="TN XX XX XXXX"
+                  />
+                </div>
 
-              <Input
-                label="Customer Mobile"
-                value={customerMobile}
-                onChange={setCustomerMobile}
-                placeholder="Mobile number"
-                type="tel"
-                icon={<Phone className="h-4 w-4" />}
-              />
+                <div className="field">
+                  <label>Vehicle Type</label>
+                  <input
+                    type="text"
+                    value={vehicleType}
+                    onChange={(e) =>
+                      setVehicleType(e.target.value)
+                    }
+                  />
+                </div>
 
-              <Input
-                label="Pickup Location"
-                value={pickup}
-                onChange={setPickup}
-                placeholder="Pickup location"
-                icon={<MapPin className="h-4 w-4" />}
-              />
+                <div className="field">
+                  <label>Driver Name</label>
+                  <input
+                    type="text"
+                    value={driverName}
+                    onChange={(e) =>
+                      setDriverName(e.target.value)
+                    }
+                    placeholder="Driver name"
+                  />
+                </div>
 
-              <Input
-                label="Drop Location"
-                value={drop}
-                onChange={setDrop}
-                placeholder="Drop location"
-                icon={<MapPin className="h-4 w-4" />}
-              />
+                <div className="field">
+                  <label>Driver Mobile</label>
+                  <input
+                    type="tel"
+                    value={driverMobile}
+                    onChange={(e) =>
+                      setDriverMobile(e.target.value)
+                    }
+                    placeholder="Driver mobile"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Trip Type
-                </label>
+              </div>
+            </div>
 
-                <select
-                  value={tripType}
-                  onChange={(e) => setTripType(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-3 text-sm outline-none"
-                >
-                  <option>One Way</option>
-                  <option>Round Trip</option>
-                  <option>Airport Pickup</option>
-                  <option>Airport Drop</option>
-                  <option>Local</option>
-                  <option>Temple Tour</option>
-                  <option>Outstation</option>
-                </select>
+            <div className="trip-card">
+              <h2 className="section-title">
+                KM Details
+              </h2>
+
+              <div className="grid">
+
+                <div className="field">
+                  <label>Starting KM</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={startKm}
+                    onChange={(e) =>
+                      setStartKm(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Closing KM</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={closingKm}
+                    onChange={(e) =>
+                      setClosingKm(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
               </div>
 
-              <Input
-                label="Reporting Time"
-                type="time"
-                icon={<Clock className="h-4 w-4" />}
-              />
+              <div className="total-box">
+                <div>
+                  <div className="total-label">
+                    TOTAL DISTANCE
+                  </div>
+                  <strong>Total KM</strong>
+                </div>
 
-            </div>
-          </Section>
-
-          {/* Vehicle */}
-          <Section title="Vehicle & Driver">
-
-            <div className="grid sm:grid-cols-2 gap-4">
-
-              <Input
-                label="Vehicle Number"
-                value={vehicleNo}
-                onChange={setVehicleNo}
-                placeholder="TN XX XX XXXX"
-                icon={<Car className="h-4 w-4" />}
-              />
-
-              <Input
-                label="Vehicle Type"
-                value={vehicleType}
-                onChange={setVehicleType}
-                icon={<Car className="h-4 w-4" />}
-              />
-
-              <Input
-                label="Driver Name"
-                value={driver}
-                onChange={setDriver}
-                placeholder="Driver name"
-                icon={<User className="h-4 w-4" />}
-              />
-
-              <Input
-                label="Driver Mobile"
-                value={driverMobile}
-                onChange={setDriverMobile}
-                placeholder="Driver mobile"
-                type="tel"
-                icon={<Phone className="h-4 w-4" />}
-              />
-
-            </div>
-          </Section>
-
-          {/* KM */}
-          <Section title="KM Details">
-
-            <div className="grid sm:grid-cols-3 gap-4">
-
-              <Input
-                label="Starting KM"
-                type="number"
-                value={startKm}
-                onChange={setStartKm}
-                placeholder="0"
-              />
-
-              <Input
-                label="Closing KM"
-                type="number"
-                value={closeKm}
-                onChange={setCloseKm}
-                placeholder="0"
-              />
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Total KM
-                </label>
-
-                <div className="mt-1 rounded-xl bg-royal px-4 py-3 text-lg font-bold text-white">
+                <div className="total-value">
                   {totalKm} KM
                 </div>
               </div>
-
-            </div>
-          </Section>
-
-          {/* Charges */}
-          <Section title="Trip Charges">
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-              <MoneyInput
-                label="Vehicle Charge"
-                value={vehicleCharge}
-                onChange={setVehicleCharge}
-              />
-
-              <MoneyInput
-                label="Toll"
-                value={toll}
-                onChange={setToll}
-              />
-
-              <MoneyInput
-                label="Parking"
-                value={parking}
-                onChange={setParking}
-              />
-
-              <MoneyInput
-                label="Permit"
-                value={permit}
-                onChange={setPermit}
-              />
-
-              <MoneyInput
-                label="Driver Bata"
-                value={bata}
-                onChange={setBata}
-              />
-
-              <MoneyInput
-                label="Other Charges"
-                value={other}
-                onChange={setOther}
-              />
-
             </div>
 
-            <div className="mt-5 flex items-center justify-between rounded-2xl bg-royal px-5 py-5 text-white">
-              <span className="font-bold">
-                TOTAL AMOUNT
-              </span>
+            <div className="trip-card">
+              <h2 className="section-title">
+                Trip Charges
+              </h2>
 
-              <span className="text-2xl font-bold text-gold">
-                {money(totalAmount)}
-              </span>
+              <div className="grid">
+
+                <div className="field">
+                  <label>Vehicle Charge ₹</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={vehicleCharge}
+                    onChange={(e) =>
+                      setVehicleCharge(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Toll ₹</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={toll}
+                    onChange={(e) =>
+                      setToll(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Parking ₹</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={parking}
+                    onChange={(e) =>
+                      setParking(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Permit ₹</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={permit}
+                    onChange={(e) =>
+                      setPermit(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Driver Bata ₹</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={driverBata}
+                    onChange={(e) =>
+                      setDriverBata(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Other Charges ₹</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={otherCharge}
+                    onChange={(e) =>
+                      setOtherCharge(e.target.value)
+                    }
+                    placeholder="0"
+                  />
+                </div>
+
+              </div>
+
+              <div className="total-box">
+                <div>
+                  <div className="total-label">
+                    TOTAL TRIP AMOUNT
+                  </div>
+                  <strong>Grand Total</strong>
+                </div>
+
+                <div className="total-value">
+                  {money(totalCharges)}
+                </div>
+              </div>
             </div>
 
-          </Section>
+            <div className="trip-card">
+              <h2 className="section-title">
+                Notes
+              </h2>
 
-          {/* ACTIONS */}
-          <div className="grid sm:grid-cols-3 gap-3">
+              <div className="field">
+                <label>Additional Information</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) =>
+                    setNotes(e.target.value)
+                  }
+                  placeholder="Additional trip details..."
+                />
+              </div>
+            </div>
 
-            <button
-              onClick={printTripSheet}
-              className="inline-flex items-center justify-center gap-2 rounded-xl gradient-gold px-5 py-4 font-bold text-gold-foreground shadow-gold"
-            >
-              <Printer className="h-5 w-5" />
-              Generate PDF
-            </button>
+            <div className="trip-card">
+              <div className="button-row">
 
-            <button
-              onClick={shareWhatsApp}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#128c7e] px-5 py-4 font-bold text-white"
-            >
-              <MessageCircle className="h-5 w-5" />
-              WhatsApp
-            </button>
+                <button
+                  type="button"
+                  className="action-button print-button"
+                  onClick={printTripSheet}
+                >
+                  🖨️ Print / Save PDF
+                </button>
 
-            <button
-              onClick={resetForm}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-royal px-5 py-4 font-bold text-white"
-            >
-              <RotateCcw className="h-5 w-5" />
-              New Trip
-            </button>
+                <button
+                  type="button"
+                  className="action-button whatsapp-button"
+                  onClick={shareWhatsApp}
+                >
+                  💬 WhatsApp
+                </button>
 
+                <button
+                  type="button"
+                  className="action-button reset-button"
+                  onClick={resetForm}
+                >
+                  🔄 New Trip
+                </button>
+
+              </div>
+            </div>
           </div>
 
-        </div>
+          {/* ======================================
+              PRINTABLE TRIP SHEET
+          ======================================= */}
 
-        {/* PRINTABLE TRIP SHEET */}
-        <div className="trip-print-sheet">
+          <div className="sheet">
 
-          <div className="border-2 border-royal rounded-2xl overflow-hidden bg-white">
+            <div className="sheet-top">
 
-            {/* PDF HEADER */}
-            <div className="bg-royal text-white px-6 py-6 text-center">
-
-              <h1 className="font-display text-3xl font-bold">
-                RAJPUTRI TRAVELS
-              </h1>
-
-              <p className="mt-1 text-sm text-white/80">
-                Professional Travel & Cab Services
-              </p>
-
-              <div className="mt-4 inline-block rounded-full bg-white/10 px-5 py-2 text-xs font-bold tracking-widest">
-                TRIP SHEET
-              </div>
-
-            </div>
-
-            <div className="p-6">
-
-              {/* Trip number */}
-              <div className="flex justify-between border-b pb-4">
-
-                <div>
-                  <div className="text-xs text-muted-foreground">
-                    TRIP SHEET NO.
-                  </div>
-
-                  <div className="font-bold text-royal">
-                    {tripNo}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">
-                    DATE
-                  </div>
-
-                  <div className="font-bold text-royal">
-                    {date || "-"}
-                  </div>
-                </div>
-
-              </div>
-
-              <PrintSection title="CUSTOMER DETAILS">
-
-                <PrintRow label="Customer Name" value={customer} />
-                <PrintRow label="Mobile" value={customerMobile} />
-                <PrintRow label="Pickup" value={pickup} />
-                <PrintRow label="Drop" value={drop} />
-                <PrintRow label="Trip Type" value={tripType} />
-
-              </PrintSection>
-
-              <PrintSection title="VEHICLE & DRIVER">
-
-                <PrintRow label="Vehicle No." value={vehicleNo} />
-                <PrintRow label="Vehicle Type" value={vehicleType} />
-                <PrintRow label="Driver Name" value={driver} />
-                <PrintRow label="Driver Mobile" value={driverMobile} />
-
-              </PrintSection>
-
-              <PrintSection title="KM DETAILS">
-
-                <PrintRow label="Starting KM" value={`${startKm || 0} KM`} />
-                <PrintRow label="Closing KM" value={`${closeKm || 0} KM`} />
-                <PrintRow label="Total KM" value={`${totalKm} KM`} />
-
-              </PrintSection>
-
-              <PrintSection title="CHARGES">
-
-                <PrintRow label="Vehicle Charge" value={money(Number(vehicleCharge || 0))} />
-                <PrintRow label="Toll" value={money(Number(toll || 0))} />
-                <PrintRow label="Parking" value={money(Number(parking || 0))} />
-                <PrintRow label="Permit" value={money(Number(permit || 0))} />
-                <PrintRow label="Driver Bata" value={money(Number(bata || 0))} />
-                <PrintRow label="Other Charges" value={money(Number(other || 0))} />
-
-              </PrintSection>
-
-              {/* TOTAL */}
-              <div className="mt-6 rounded-xl bg-royal px-5 py-4 text-white flex justify-between">
-                <span className="font-bold">
-                  TOTAL AMOUNT
-                </span>
-
-                <span className="text-xl font-bold text-gold">
-                  {money(totalAmount)}
-                </span>
-              </div>
-
-              {/* Signature & Seal */}
-              <div className="mt-12 grid grid-cols-2 gap-10 items-end">
-
-                <div>
-                  <div className="h-12 border-b border-gray-400" />
-
-                  <p className="mt-2 text-xs font-bold">
-                    Authorized Signature
-                  </p>
-
-                  <p className="text-sm font-bold text-royal">
-                    Founder: SASIKUMAR KUPPUSAMY
-                  </p>
-                </div>
-
-                <div className="flex justify-end">
-
-                  <div className="h-24 w-24 rounded-full border-2 border-royal flex items-center justify-center text-center">
-
-                    <div>
-                      <ShieldCheck className="mx-auto h-6 w-6 text-royal" />
-
-                      <div className="text-[9px] font-bold text-royal">
-                        RAJPUTRI
-                      </div>
-
-                      <div className="text-[8px] font-bold">
-                        TRAVELS
-                      </div>
-
-                      <div className="text-[7px]">
-                        AUTHORIZED
-                      </div>
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Footer */}
-              <div className="mt-10 border-t pt-5 text-center">
-
-                <p className="text-sm font-bold text-royal">
+              <div>
+                <div className="company-name">
                   RAJPUTRI TRAVELS
-                </p>
+                </div>
 
-                <p className="mt-1 text-xs">
-                  Founder: SASIKUMAR KUPPUSAMY
-                </p>
-
-                <p className="text-xs">
+                <div className="company-info">
+                  Airport Pickup & Drop · Temple Tours
+                  · Outstation Taxi
+                  <br />
                   Phone: 8489999568
-                </p>
-
-                <p className="text-xs">
+                  <br />
                   www.rajputritravels.com
-                </p>
-
-                <p className="text-xs">
+                  <br />
                   blog.rajputritravels.com
-                </p>
-
+                </div>
               </div>
 
+              <div className="trip-number">
+                <div>TRIP SHEET</div>
+                <div>{tripNo}</div>
+                <div>{formatDate(date)}</div>
+              </div>
+
+            </div>
+
+            <table className="sheet-table">
+              <tbody>
+
+                <tr>
+                  <th>Customer Name</th>
+                  <td>{customerName || "-"}</td>
+
+                  <th>Mobile</th>
+                  <td>{customerMobile || "-"}</td>
+                </tr>
+
+                <tr>
+                  <th>Trip Type</th>
+                  <td>{tripType}</td>
+
+                  <th>Reporting Time</th>
+                  <td>{reportingTime || "-"}</td>
+                </tr>
+
+                <tr>
+                  <th>Pickup</th>
+                  <td>{pickup || "-"}</td>
+
+                  <th>Drop</th>
+                  <td>{drop || "-"}</td>
+                </tr>
+
+                <tr>
+                  <th>Vehicle No</th>
+                  <td>{vehicleNo || "-"}</td>
+
+                  <th>Vehicle</th>
+                  <td>{vehicleType || "-"}</td>
+                </tr>
+
+                <tr>
+                  <th>Driver</th>
+                  <td>{driverName || "-"}</td>
+
+                  <th>Driver Mobile</th>
+                  <td>{driverMobile || "-"}</td>
+                </tr>
+
+              </tbody>
+            </table>
+
+            <table className="sheet-table">
+              <tbody>
+
+                <tr>
+                  <th>Starting KM</th>
+                  <td>{startKm || "-"}</td>
+
+                  <th>Closing KM</th>
+                  <td>{closingKm || "-"}</td>
+                </tr>
+
+                <tr>
+                  <th>Total KM</th>
+                  <td colSpan={3}>
+                    <strong>{totalKm} KM</strong>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+
+            <table className="sheet-table">
+              <thead>
+                <tr>
+                  <th>Charge Description</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                <tr>
+                  <td>Vehicle Charge</td>
+                  <td>{money(Number(vehicleCharge) || 0)}</td>
+                </tr>
+
+                <tr>
+                  <td>Toll</td>
+                  <td>{money(Number(toll) || 0)}</td>
+                </tr>
+
+                <tr>
+                  <td>Parking</td>
+                  <td>{money(Number(parking) || 0)}</td>
+                </tr>
+
+                <tr>
+                  <td>Permit</td>
+                  <td>{money(Number(permit) || 0)}</td>
+                </tr>
+
+                <tr>
+                  <td>Driver Bata</td>
+                  <td>{money(Number(driverBata) || 0)}</td>
+                </tr>
+
+                <tr>
+                  <td>Other Charges</td>
+                  <td>{money(Number(otherCharge) || 0)}</td>
+                </tr>
+
+                <tr>
+                  <th>GRAND TOTAL</th>
+                  <th>{money(totalCharges)}</th>
+                </tr>
+
+              </tbody>
+            </table>
+
+            <table className="sheet-table">
+              <tbody>
+                <tr>
+                  <th>Notes</th>
+                  <td>{notes || "-"}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="seal-sign">
+
+              <div className="seal">
+                RAJPUTRI
+                <br />
+                TRAVELS
+                <br />
+                OFFICIAL
+              </div>
+
+              <div className="signature">
+                <div className="signature-line"></div>
+                <strong>
+                  SASIKUMAR KUPPUSAMY
+                </strong>
+                <br />
+                Founder
+              </div>
+
+            </div>
+
+            <div className="sheet-footer">
+              Thank you for travelling with RAJPUTRI TRAVELS.
+              <br />
+              Safe · Comfortable · On-Time Travel
             </div>
 
           </div>
 
         </div>
-
-      </main>
-    </div>
-  );
-}
-
-
-/* ---------------- Components ---------------- */
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-
-      <h3 className="mb-4 border-l-4 border-gold pl-3 font-display text-lg font-bold text-royal">
-        {title}
-      </h3>
-
-      {children}
-
-    </section>
-  );
-}
-
-
-function Input({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  icon,
-  readOnly = false,
-}: {
-  label: string;
-  value?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-  icon?: React.ReactNode;
-  readOnly?: boolean;
-}) {
-  return (
-    <label className="block">
-
-      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-        {label}
-      </span>
-
-      <div className="mt-1 flex items-center gap-2 rounded-xl border border-input bg-background px-3 py-3">
-
-        {icon && (
-          <span className="text-royal">
-            {icon}
-          </span>
-        )}
-
-        <input
-          type={type}
-          value={value}
-          readOnly={readOnly}
-          placeholder={placeholder}
-          onChange={(e) =>
-            onChange?.(e.target.value)
-          }
-          className="w-full bg-transparent text-sm outline-none"
-        />
-
       </div>
-
-    </label>
-  );
-}
-
-
-function MoneyInput({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Input
-      label={`${label} ₹`}
-      type="number"
-      value={value}
-      onChange={onChange}
-      placeholder="0"
-      icon={<IndianRupee className="h-4 w-4" />}
-    />
-  );
-}
-
-
-function PrintSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="mt-6">
-
-      <h3 className="border-b-2 border-royal pb-2 text-sm font-bold tracking-widest text-royal">
-        {title}
-      </h3>
-
-      <div className="mt-3">
-        {children}
-      </div>
-
-    </div>
-  );
-}
-
-
-function PrintRow({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string;
-}) {
-  return (
-    <div className="grid grid-cols-2 border-b border-gray-100 py-2 text-sm">
-
-      <span className="font-semibold text-gray-600">
-        {label}
-      </span>
-
-      <span className="font-semibold text-gray-900">
-        {value || "-"}
-      </span>
-
-    </div>
+    </>
   );
 }
