@@ -457,250 +457,6 @@ function TripSheet() {
     setHistory((prev) => prev.filter((item) => !ids.has(item.id)));
   };
 
-
-  const pdfEscape = (value: string) =>
-    String(value ?? "")
-      .replace(/\\/g, "\\\\")
-      .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)");
-
-  const pdfText = (
-    text: string,
-    x: number,
-    y: number,
-    size = 9,
-    font = "F1"
-  ) =>
-    `BT /${font} ${size} Tf 0 g 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${pdfEscape(
-      text
-    )}) Tj ET`;
-
-  const pdfBold = (text: string, x: number, y: number, size = 9) =>
-    pdfText(text, x, y, size, "F2");
-
-  const pdfRect = (
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    fillGray?: number,
-    strokeGray = 0.75,
-    lineWidth = 0.7
-  ) => {
-    const fill = fillGray == null ? "" : `${fillGray} g `;
-    return `${fill}${strokeGray} G ${lineWidth} w ${x} ${y} ${w} ${h} re ${
-      fillGray == null ? "S" : "B"
-    }`;
-  };
-
-  const pdfLine = (x1: number, y1: number, x2: number, y2: number) =>
-    `0.72 G 0.7 w ${x1} ${y1} m ${x2} ${y2} l S`;
-
-  const downloadPdf = () => {
-    const pageW = 595.28;
-    const pageH = 841.89;
-    const left = 34;
-    const right = 561;
-    const width = right - left;
-    const lines: string[] = [];
-
-    const add = (cmd: string) => lines.push(cmd);
-
-    // Background/header
-    add("0.07 g 0 785 595.28 56 re f");
-    add("0.78 G 2 w 34 785 m 561 785 l S");
-
-    // Royal R logo
-    add("0.78 G 2.2 w 70 813 25 0 360 arc S");
-    add("0.78 G 1 w 70 813 21 0 360 arc S");
-    add(pdfBold("R", 65.5, 806, 19));
-
-    add(pdfBold("RAJPUTRI", 100, 818, 18));
-    add(pdfBold("TOURS & TRAVELS", 101, 803, 8));
-    add(pdfText("Safe Journey - Happy Memories", 101, 791, 7));
-
-    add(pdfBold("TRIP SHEET", 450, 818, 15));
-    add(pdfText(`Trip No: ${trip.tripNo || "DRAFT"}`, 450, 803, 8));
-    add(pdfText(`Date: ${formatDate(trip.date)}`, 450, 791, 8));
-
-    let y = 762;
-
-    // Customer + Route
-    add(pdfRect(left, y - 92, 254, 92));
-    add(pdfRect(307, y - 92, 254, 92));
-    add(pdfBold("CUSTOMER DETAILS", left + 10, y - 15, 8));
-    add(pdfLine(left + 10, y - 20, left + 244, y - 20));
-    add(pdfBold("Name", left + 10, y - 36, 7));
-    add(pdfText(trip.customerName || "-", left + 75, y - 36, 8));
-    add(pdfBold("Mobile", left + 10, y - 51, 7));
-    add(pdfText(trip.customerMobile || "-", left + 75, y - 51, 8));
-    add(pdfBold("Trip Type", left + 10, y - 66, 7));
-    add(pdfText(trip.tripType, left + 75, y - 66, 8));
-    add(pdfBold("Reporting", left + 10, y - 81, 7));
-    add(pdfText(trip.reportingTime || "-", left + 75, y - 81, 8));
-
-    add(pdfBold("ROUTE DETAILS", 317, y - 15, 8));
-    add(pdfLine(317, y - 20, 551, y - 20));
-    add(pdfBold("Pickup", 317, y - 36, 7));
-    add(pdfText(trip.pickup || "-", 382, y - 36, 8));
-    add(pdfBold("Drop", 317, y - 51, 7));
-    add(pdfText(trip.drop || "-", 382, y - 51, 8));
-    if (trip.tripType === "Full Day Rental") {
-      add(pdfBold("End Date", 317, y - 66, 7));
-      add(pdfText(formatDate(trip.endDate), 382, y - 66, 8));
-      add(pdfBold("Release", 317, y - 81, 7));
-      add(pdfText(trip.releaseTime || "-", 382, y - 81, 8));
-    }
-
-    y -= 103;
-
-    // Vehicle
-    add(pdfRect(left, y - 64, width, 64));
-    add(pdfBold("VEHICLE & DRIVER DETAILS", left + 10, y - 15, 8));
-    add(pdfLine(left + 10, y - 20, right - 10, y - 20));
-    add(pdfBold("Vehicle No", left + 10, y - 36, 7));
-    add(pdfText(trip.vehicleNo || "-", left + 78, y - 36, 8));
-    add(pdfBold("Vehicle", left + 180, y - 36, 7));
-    add(pdfText(trip.vehicle || "-", left + 230, y - 36, 8));
-    add(pdfBold("Driver", left + 350, y - 36, 7));
-    add(pdfText(trip.driver || "-", left + 390, y - 36, 8));
-    add(pdfBold("Driver Mobile", left + 10, y - 51, 7));
-    add(pdfText(trip.driverMobile || "-", left + 78, y - 51, 8));
-    add(pdfBold("Distance", left + 180, y - 51, 7));
-    add(pdfText(`${totalKm} KM`, left + 230, y - 51, 8));
-    if (trip.tripType === "Full Day Rental") {
-      add(pdfBold("Rental Days", left + 350, y - 51, 7));
-      add(pdfText(String(rentalDays), left + 410, y - 51, 8));
-    }
-
-    y -= 75;
-
-    // Rental terms
-    if (trip.tripType === "Full Day Rental") {
-      add(pdfRect(left, y - 70, width, 70, 0.96, 0.35, 1));
-      add(pdfBold(`FULL DAY RENTAL - INR ${DAILY_RENTAL.toLocaleString("en-IN")} / DAY`, left + 10, y - 15, 9));
-      add(pdfText(`One Day Rental = 12 Hours or 200 KM. Fixed package charge.`, left + 10, y - 30, 7.5));
-      add(pdfText(`After 200 KM, up to 20 additional KM is free. Beyond 220 KM, next day rental applies.`, left + 10, y - 43, 7.5));
-      add(pdfText(`Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.`, left + 10, y - 56, 7.5));
-      add(pdfBold(`Rental: ${rentalDays} day(s) x INR 2,000 = INR ${rentalAmount.toLocaleString("en-IN")}`, left + 10, y - 66, 8));
-      y -= 80;
-    }
-
-    // Charges
-    add(pdfBold("CHARGES", left, y, 9));
-    y -= 10;
-    add(pdfRect(left, y - 155, width, 155));
-    add(pdfRect(left, y - 25, width, 25, 0.94, 0.75, 0.5));
-    add(pdfBold("DESCRIPTION", left + 10, y - 16, 7.5));
-    add(pdfBold("AMOUNT", right - 65, y - 16, 7.5));
-
-    let rowY = y - 40;
-    const rows: [string, string][] =
-      trip.tripType === "Full Day Rental"
-        ? [
-            [`Daily Rental (${rentalDays} day x INR 2,000)`, money(rentalAmount).replace("₹", "INR ")],
-            ["Toll", money(toll).replace("₹", "INR ")],
-            ["Parking", money(parking).replace("₹", "INR ")],
-            ["Permit", money(permit).replace("₹", "INR ")],
-            ["Driver Bata", money(driverBata).replace("₹", "INR ")],
-            ["Other", money(other).replace("₹", "INR ")],
-          ]
-        : [
-            ["Vehicle Charge", money(regularVehicleCharge).replace("₹", "INR ")],
-            ["Toll", money(toll).replace("₹", "INR ")],
-            ["Parking", money(parking).replace("₹", "INR ")],
-            ["Permit", money(permit).replace("₹", "INR ")],
-            ["Driver Bata", money(driverBata).replace("₹", "INR ")],
-            ["Other", money(other).replace("₹", "INR ")],
-          ];
-
-    rows.forEach(([label, amount]) => {
-      add(pdfText(label, left + 10, rowY, 7.5));
-      add(pdfText(amount, right - 65, rowY, 7.5));
-      rowY -= 18;
-    });
-
-    y -= 168;
-
-    // Grand total
-    add(pdfRect(left, y - 38, width, 38, 0.10, 0.10, 1.2));
-    add("1 g");
-    add(pdfBold("GRAND TOTAL - CUSTOMER PAYABLE", left + 12, y - 16, 9));
-    add(pdfBold(`INR ${grandTotal.toLocaleString("en-IN")}`, right - 115, y - 18, 14));
-    add("0 g");
-    y -= 49;
-
-    // Notes + seal
-    add(pdfRect(left, y - 54, 390, 54));
-    add(pdfBold("NOTES", left + 10, y - 14, 7.5));
-    const note =
-      trip.notes || "Thank you for travelling with Rajputri Tours & Travels.";
-    const noteText = note.length > 120 ? `${note.slice(0, 117)}...` : note;
-    add(pdfText(noteText, left + 10, y - 29, 7.5));
-    add(pdfText("Digitally Generated Trip Sheet", left + 10, y - 43, 7));
-
-    // Simple seal
-    const sx = 505;
-    const sy = y - 26;
-    add(`0.15 G 1.5 w ${sx} ${sy} 25 0 360 arc S`);
-    add(`0.78 G 0.9 w ${sx} ${sy} 20 0 360 arc S`);
-    add(pdfBold("R", sx - 5, sy + 3, 13));
-    add(pdfText("OFFICIAL", sx - 16, sy - 10, 5.5));
-    add(pdfText("DIGITAL", sx - 13, sy - 18, 5.5));
-
-    y -= 66;
-    add(pdfLine(left, y, right, y));
-    add(pdfText("Phone: 8489999568 | Website: www.rajputritravels.com | Blog: blog.rajputritravels.com", left, y - 13, 7));
-    add(pdfText("RAJPUTRI TOURS & TRAVELS", left, y - 26, 6.5));
-    add(pdfText("Safe - Comfortable - On-Time Travel", right - 150, y - 26, 6.5));
-
-    const content = lines.join("\n") + "\n";
-    const objects: string[] = [];
-    const addObj = (body: string) => {
-      objects.push(body);
-      return objects.length;
-    };
-
-    const catalog = addObj("<< /Type /Catalog /Pages 2 0 R >>");
-    const pages = addObj("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-    const page = addObj(
-      "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>"
-    );
-    const stream = addObj(
-      `<< /Length ${content.length} >>\nstream\n${content}endstream`
-    );
-    const font1 = addObj(
-      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
-    );
-    const font2 = addObj(
-      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
-    );
-
-    let pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
-    const offsets: number[] = [0];
-    for (let i = 0; i < objects.length; i++) {
-      offsets.push(pdf.length);
-      pdf += `${i + 1} 0 obj\n${objects[i]}\nendobj\n`;
-    }
-    const xref = pdf.length;
-    pdf += `xref\n0 ${objects.length + 1}\n`;
-    pdf += "0000000000 65535 f \n";
-    for (let i = 1; i <= objects.length; i++) {
-      pdf += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
-    }
-    pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
-
-    const blob = new Blob([pdf], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${trip.tripNo || "Trip-Sheet"}-${trip.date || "trip"}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-
   const whatsapp = () => {
     if (!trip.customerMobile.trim()) {
       window.alert("Customer Mobile Number உள்ளிடவும்.");
@@ -842,98 +598,267 @@ function TripSheet() {
 
         @media print {
           @page { size: A4 portrait; margin: 0; }
-          html, body { width: 210mm; height: 297mm; margin: 0; background: white; }
+          html, body {
+            width: 210mm; height: 297mm; margin: 0; padding: 0;
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body { overflow: hidden; }
           .trip-app { display: none !important; }
           .print-area {
             display: block !important;
-            width: 210mm;
-            height: 297mm;
-            overflow: hidden;
-            background: white;
+            width: 210mm; height: 297mm; overflow: hidden;
+            background: #ffffff !important;
           }
           .print-sheet {
-            width: 210mm;
-            height: 297mm;
-            padding: 9mm 10mm 7mm;
+            position: relative;
+            width: 210mm; height: 297mm;
+            padding: 8mm 9mm 6mm;
             overflow: hidden;
-            color: #111;
+            color: #172033;
+            background: #ffffff;
             font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
+
+          /* Premium header */
           .p-header {
-            height: 36mm;
+            height: 40mm;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1.4px solid #c9a227;
-            padding-bottom: 4mm;
+            padding: 4mm 5mm;
+            border-radius: 4mm;
+            background: #101827 !important;
+            border: 1px solid #c8a64b;
+            border-bottom: 3px solid #c8a64b;
+            color: #ffffff !important;
           }
           .p-brand { display: flex; align-items: center; gap: 4mm; }
           .p-brand-text h1 {
-            margin: 0; font: 900 23pt Georgia, serif; letter-spacing: 2px;
+            margin: 0;
+            color: #ffffff !important;
+            font: 900 25pt Georgia, "Times New Roman", serif;
+            letter-spacing: 2.4px;
           }
           .p-brand-text .sub {
-            margin-top: 1mm; font-size: 8.5pt; font-weight: 800; letter-spacing: 1.7px;
+            margin-top: 1.2mm;
+            color: #e1bd59 !important;
+            font-size: 9pt;
+            font-weight: 900;
+            letter-spacing: 2px;
           }
           .p-brand-text .tag {
-            margin-top: 1.5mm; font-size: 7pt; color: #555;
+            margin-top: 2mm;
+            color: #d8dde8 !important;
+            font-size: 7.5pt;
+            letter-spacing: .4px;
           }
-          .p-title { text-align: right; }
-          .p-title h2 { margin: 0; font-size: 18pt; letter-spacing: 1px; }
-          .p-title div { margin-top: 2mm; font-size: 8.5pt; }
+          .p-title {
+            min-width: 52mm;
+            text-align: right;
+          }
+          .p-title h2 {
+            margin: 0;
+            color: #e1bd59 !important;
+            font-size: 20pt;
+            font-weight: 900;
+            letter-spacing: 1.6px;
+          }
+          .p-title div {
+            margin-top: 2mm;
+            color: #ffffff !important;
+            font-size: 8.8pt;
+            line-height: 1.25;
+          }
+          .p-title div b { color: #d8dde8 !important; }
+
+          /* Information cards */
           .p-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin-top: 4mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3mm;
+            margin-top: 4mm;
           }
           .p-box {
-            border: .7px solid #bbb; border-radius: 2mm; padding: 3mm 3.5mm;
+            position: relative;
+            border: 1px solid #d7dce5;
+            border-radius: 3mm;
+            padding: 3.5mm 4mm;
             min-height: 25mm;
+            background: #fbfcfe !important;
+            box-shadow: inset 3px 0 0 #c8a64b;
           }
           .p-box h3 {
-            margin: 0 0 2mm; font-size: 8pt; text-transform: uppercase; letter-spacing: .7px;
-            border-bottom: .5px solid #ddd; padding-bottom: 1.5mm;
+            margin: 0 0 2.5mm;
+            padding-bottom: 1.5mm;
+            color: #152238;
+            font-size: 8.5pt;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .9px;
+            border-bottom: 1px solid #e1e5ec;
           }
           .p-line {
-            display: grid; grid-template-columns: 34% 66%; gap: 2mm; margin-bottom: 1.2mm;
-            font-size: 8.3pt; line-height: 1.25;
+            display: grid;
+            grid-template-columns: 32% 68%;
+            gap: 2mm;
+            margin-bottom: 1.5mm;
+            font-size: 9pt;
+            line-height: 1.25;
           }
-          .p-line b { color: #555; }
+          .p-line b { color: #5c6675; }
+          .p-line span { color: #182235; font-weight: 600; }
           .p-full { grid-column: 1 / -1; }
+
+          /* Distance strip */
           .p-distance {
-            margin-top: 3mm; border: 1px solid #c9a227; background: #fffdf4;
-            border-radius: 2mm; padding: 2.5mm 3mm; display: flex; justify-content: space-between;
-            font-size: 9pt; font-weight: 800;
+            margin-top: 3mm;
+            border: 1px solid #d5b75f;
+            border-radius: 3mm;
+            padding: 2.8mm 4mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff9e8 !important;
+            color: #283246;
+            font-size: 10pt;
+            font-weight: 900;
           }
+          .p-distance span:last-child {
+            color: #9a7411;
+            font-size: 12pt;
+          }
+
+          /* Rental terms */
           .p-rental {
-            margin-top: 3mm; border: 1px solid #222; border-radius: 2mm; padding: 3mm;
-            background: #fafafa;
+            margin-top: 3mm;
+            border: 1px solid #c8a64b;
+            border-radius: 3mm;
+            padding: 3mm 4mm;
+            background: #fffaf0 !important;
+            box-shadow: inset 4px 0 0 #c8a64b;
           }
-          .p-rental-title { font-size: 9pt; font-weight: 900; margin-bottom: 1.5mm; }
-          .p-rental-lines { font-size: 7.5pt; line-height: 1.42; }
+          .p-rental-title {
+            color: #172238;
+            font-size: 10pt;
+            font-weight: 900;
+            margin-bottom: 1.7mm;
+          }
+          .p-rental-lines {
+            color: #3e4757;
+            font-size: 8pt;
+            line-height: 1.45;
+          }
+          .p-rental-lines b { color: #172238; }
+
+          /* Charges */
           .p-charges { margin-top: 3mm; }
-          .p-charges table { width: 100%; border-collapse: collapse; font-size: 8pt; }
-          .p-charges th, .p-charges td { border: .5px solid #ccc; padding: 1.7mm 2mm; }
-          .p-charges th { background: #f1f1f1; text-align: left; }
-          .p-charges td:last-child, .p-charges th:last-child { text-align: right; }
-          .p-grand {
-            margin-top: 2.5mm; display: flex; align-items: center; justify-content: space-between;
-            border: 1.5px solid #111; border-radius: 2mm; padding: 3mm 4mm;
+          .p-charges table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #d7dce5;
+            border-radius: 3mm;
+            overflow: hidden;
+            font-size: 8.8pt;
           }
-          .p-grand span:first-child { font-size: 9pt; font-weight: 900; }
-          .p-grand strong { font-size: 16pt; }
+          .p-charges th, .p-charges td {
+            border: 0;
+            border-bottom: 1px solid #e4e7ec;
+            padding: 1.9mm 3mm;
+          }
+          .p-charges tr:last-child td { border-bottom: 0; }
+          .p-charges th {
+            background: #162238 !important;
+            color: #ffffff !important;
+            text-align: left;
+            font-size: 8pt;
+            letter-spacing: .5px;
+          }
+          .p-charges td { color: #263144; }
+          .p-charges tbody tr:nth-child(even) td { background: #f8f9fb !important; }
+          .p-charges td:last-child,
+          .p-charges th:last-child {
+            text-align: right;
+            font-weight: 800;
+          }
+
+          /* Total */
+          .p-grand {
+            margin-top: 3mm;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #c8a64b;
+            border-radius: 3mm;
+            padding: 3.5mm 4.5mm;
+            background: #111a29 !important;
+            color: #ffffff !important;
+          }
+          .p-grand span:first-child {
+            color: #e6ebf3 !important;
+            font-size: 9.5pt;
+            font-weight: 900;
+            letter-spacing: .4px;
+          }
+          .p-grand strong {
+            color: #f1cb58 !important;
+            font-size: 18pt;
+            font-weight: 900;
+          }
+
+          /* Bottom */
           .p-bottom {
-            margin-top: 3mm; display: grid; grid-template-columns: 1fr 32mm; gap: 5mm; align-items: center;
+            margin-top: 3mm;
+            display: grid;
+            grid-template-columns: 1fr 34mm;
+            gap: 5mm;
+            align-items: center;
           }
           .p-notes {
-            border: .5px solid #ccc; border-radius: 2mm; padding: 2.5mm; min-height: 17mm;
-            font-size: 7.5pt; line-height: 1.4;
+            border: 1px solid #d7dce5;
+            border-radius: 3mm;
+            padding: 3mm 3.5mm;
+            min-height: 18mm;
+            background: #fbfcfe !important;
+            color: #3d4655;
+            font-size: 8pt;
+            line-height: 1.45;
           }
-          .p-contact { margin-top: 2.5mm; font-size: 7.3pt; color: #444; line-height: 1.4; }
-          .p-seal { text-align: center; }
+          .p-notes b { color: #162238; }
+          .p-contact {
+            margin-top: 2.5mm;
+            color: #4e5868;
+            font-size: 7.8pt;
+            line-height: 1.45;
+          }
+          .p-seal {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+          }
+
           .p-footer {
-            margin-top: 3mm; padding-top: 2.5mm; border-top: .7px solid #c9a227;
-            display: flex; justify-content: space-between; font-size: 7pt; color: #555;
+            margin-top: 3mm;
+            padding-top: 2.5mm;
+            border-top: 1px solid #d1b258;
+            display: flex;
+            justify-content: space-between;
+            gap: 4mm;
+            color: #596273;
+            font-size: 7.4pt;
+            font-weight: 700;
           }
+          .p-footer span:first-child { color: #1b2638; }
+          .p-footer span:nth-child(2) { color: #9a7411; }
+
+          /* Keep SVG logo/seal colors intact in PDF */
+          .print-sheet svg { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
+
       `}</style>
 
       <header className="topbar">
@@ -952,8 +877,8 @@ function TripSheet() {
           <button className="btn gold" onClick={saveTrip}>
             <CheckCircle2 size={16} /> Save
           </button>
-          <button className="btn" onClick={downloadPdf}>
-            <Printer size={16} /> Download PDF
+          <button className="btn" onClick={() => window.print()}>
+            <Printer size={16} /> PDF / Print
           </button>
           <button className="btn green" onClick={whatsapp}>
             <MessageCircle size={16} /> WhatsApp
@@ -1237,11 +1162,8 @@ function TripSheet() {
           <button className="btn gold" onClick={saveTrip}>
             <CheckCircle2 size={17} /> Save Trip
           </button>
-          <button className="btn" onClick={downloadPdf}>
-            <Printer size={17} /> Download PDF
-          </button>
           <button className="btn" onClick={() => window.print()}>
-            <Printer size={17} /> Print
+            <Printer size={17} /> Create PDF
           </button>
           <button className="btn green" onClick={whatsapp}>
             <MessageCircle size={17} /> Send WhatsApp
