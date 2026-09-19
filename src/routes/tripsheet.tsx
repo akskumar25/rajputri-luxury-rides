@@ -520,75 +520,233 @@ function TripSheet() {
 <style>
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; width:210mm; min-height:297mm; background:#e9edf3; }
-  body { font-family: Arial, Helvetica, sans-serif; color:#172033; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  .sheet { width:210mm; height:297mm; margin:0 auto; background:#fff; position:relative; overflow:hidden; }
-  .top-band { height:10mm; background:#07101f; border-bottom:1.6mm solid #d4af37; }
-  .inner { padding:6mm 8.5mm 4mm; height:287mm; }
-  .header { height:39mm; display:flex; align-items:center; justify-content:space-between; border-bottom:0.45mm solid #d4af37; }
-  .brand { display:flex; align-items:center; gap:4mm; }
-  .brand h1 { margin:0; font:900 30pt Georgia,serif; letter-spacing:2.2px; color:#0b1220; }
-  .brand .sub { margin-top:1.2mm; font-size:10.5pt; font-weight:900; letter-spacing:2px; color:#9b7b12; }
-  .brand .tag { margin-top:1.8mm; font-size:9pt; color:#172033; letter-spacing:.5px; }
-  .title { text-align:right; }
-  .title h2 { margin:0; font:900 26pt Georgia,serif; letter-spacing:1.4px; color:#0b1220; }
-  .title .goldline { width:42mm; height:1mm; background:#d4af37; margin:2mm 0 2mm auto; }
-  .title div { font-size:10pt; line-height:1.5; color:#172033; }
-  .title b { color:#182233; }
-  .section-grid { display:grid; grid-template-columns:1fr 1fr; gap:3.2mm; margin-top:4mm; }
-  .box { border:.4mm solid #cfd6e2; border-radius:2.5mm; padding:3.5mm 4mm; background:#fff; box-shadow:0 1mm 3mm rgba(15,23,42,.05); }
-  .box.full { grid-column:1 / -1; }
-  .box h3 { margin:0 0 2.5mm; padding-bottom:1.7mm; border-bottom:.3mm solid #cfd6e2; font-size:11pt; letter-spacing:.7px; color:#0b1220; }
-  .box h3 span { color:#b18a19; }
-  .line { display:grid; grid-template-columns:34% 66%; gap:2mm; margin:1.25mm 0; font-size:10pt; line-height:1.38; }
-  .line .label { color:#253247; font-weight:900; }
-  .line .value { color:#111827; font-weight:700; }
-  .vehicle-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; }
-  .vehicle-item .label { display:block; color:#172033; font-size:8.5pt; font-weight:800; margin-bottom:1mm; text-transform:uppercase; }
-  .vehicle-item .value { font-size:10pt; font-weight:900; color:#111827; }
-  .distance { margin-top:3.2mm; border-radius:2.5mm; padding:3mm 4mm; background:#0b1220; color:#fff; display:flex; align-items:center; justify-content:space-between; }
-  .distance .label { font-size:10pt; letter-spacing:1px; font-weight:900; }
-  .distance .value { font-size:18pt; font-weight:900; color:#f4d77d; }
-  .rental { margin-top:3.2mm; padding:3.5mm 4mm; border:1px solid #d4af37; border-radius:2.5mm; background:linear-gradient(135deg,#fffdf5,#f8f4e6); }
-  .rental-head { display:flex; justify-content:space-between; align-items:center; gap:5mm; }
-  .rental-title { font-size:12pt; font-weight:900; color:#0b1220; letter-spacing:.5px; }
-  .rental-price { font-size:18pt; font-weight:900; color:#8a6910; white-space:nowrap; }
-  .rental-copy { margin-top:2mm; font-size:9.2pt; line-height:1.45; color:#273449; }
-  .charges { margin-top:3.2mm; border:1px solid #d8dde6; border-radius:2.5mm; overflow:hidden; }
-  .charges-head { padding:2.5mm 4mm; background:#0b1220; color:#fff; font-size:11pt; font-weight:900; letter-spacing:.8px; }
-  table { width:100%; border-collapse:collapse; font-size:10pt; }
-  th { background:#f1ead2; color:#111827; text-align:left; padding:2mm 4mm; border-bottom:.35mm solid #d4af37; }
-  td { padding:2.1mm 4mm; border-bottom:.25mm solid #e5e7eb; }
-  td:last-child, th:last-child { text-align:right; font-weight:800; }
-  tr:last-child td { border-bottom:0; }
-  .grand { margin-top:3mm; background:#0b1220; border:1px solid #d4af37; border-radius:2.5mm; padding:3.5mm 4mm; display:flex; align-items:center; justify-content:space-between; color:#fff; }
-  .grand .label { font-size:11pt; font-weight:900; letter-spacing:.6px; }
-  .grand .amount { font-size:23pt; font-weight:900; color:#f4d77d; }
-  .bottom { margin-top:2.8mm; display:grid; grid-template-columns:1fr 48mm; gap:4mm; align-items:center; }
-  .notes { min-height:19mm; border:.35mm solid #d8dde6; border-radius:2.5mm; padding:3mm 4mm; background:#fafbfc; font-size:9pt; line-height:1.48; color:#273449; }
-  .notes b { color:#0b1220; }
-  .contact { margin-top:2.2mm; font-size:8.5pt; color:#172033; line-height:1.45; }
-  .seal { display:flex; justify-content:center; align-items:center; }
-  .seal-ring {
-    width:46mm; height:46mm; border:1.25mm solid #07101f; outline:.7mm solid #d4af37;
-    outline-offset:-2.8mm; border-radius:50%; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; background:radial-gradient(circle at 50% 30%,#fffdf7 0%,#f6edcf 68%,#ead89b 100%);
-    box-shadow:0 1.5mm 4mm rgba(7,16,31,.22); position:relative;
+  html, body {
+    margin: 0; padding: 0; width: 210mm; height: 297mm;
+    background: #e9edf3;
   }
-  .seal-ring:before, .seal-ring:after { content:""; position:absolute; border-radius:50%; pointer-events:none; }
-  .seal-ring:before { inset:3.3mm; border:0.3mm dashed #a97e0e; }
-  .seal-ring:after { inset:6.2mm; border:0.25mm solid rgba(7,16,31,.28); }
-  .seal-top { font-size:6.5pt; font-weight:900; letter-spacing:1.4px; color:#7f5e0a; margin-bottom:1mm; }
-  .seal-crown { font-size:12pt; line-height:1; color:#b58a16; margin-bottom:.8mm; }
-  .seal-r { font:900 25pt Georgia,serif; color:#07101f; line-height:1; }
-  .seal-divider { width:15mm; height:.35mm; background:#b58a16; margin:1.1mm 0; }
-  .seal-check { margin-top:.5mm; font-size:7pt; font-weight:900; color:#07101f; }
-  .seal-small { margin-top:1.2mm; font-size:5.8pt; font-weight:900; color:#172033; letter-spacing:.55px; }
-  .seal-bottom { margin-top:1.1mm; font-size:5.4pt; font-weight:900; letter-spacing:.8px; color:#7f5e0a; }
-  .footer { position:absolute; left:9mm; right:9mm; bottom:3.5mm; border-top:.35mm solid #d4af37; padding-top:2.2mm; display:flex; justify-content:space-between; font-size:7.5pt; color:#263449; }
-  .footer b { color:#0b1220; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111827;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .sheet {
+    width: 210mm; height: 297mm; margin: 0 auto;
+    background: #fff; position: relative; overflow: hidden;
+  }
+  .top-band {
+    height: 8mm; background: #07101f;
+    border-bottom: 1.2mm solid #d4af37;
+  }
+  .inner {
+    padding: 4.5mm 8.5mm 1.5mm;
+    height: 281mm;
+  }
+
+  /* Header */
+  .header {
+    height: 31mm; display: flex; align-items: center;
+    justify-content: space-between;
+    border-bottom: .45mm solid #d4af37;
+  }
+  .brand { display: flex; align-items: center; gap: 4mm; }
+  .brand h1 {
+    margin: 0; font: 900 29pt Georgia, serif;
+    letter-spacing: 2px; color: #07101f;
+  }
+  .brand .sub {
+    margin-top: 1mm; font-size: 10.5pt; font-weight: 900;
+    letter-spacing: 1.8px; color: #8c6910;
+  }
+  .brand .tag {
+    margin-top: 1.2mm; font-size: 8.8pt;
+    color: #263144; font-weight: 600;
+  }
+  .title { text-align: right; }
+  .title h2 {
+    margin: 0; font: 900 25pt Georgia, serif;
+    letter-spacing: 1.2px; color: #07101f;
+  }
+  .title .goldline {
+    width: 39mm; height: .9mm; background: #d4af37;
+    margin: 1.5mm 0 1.7mm auto;
+  }
+  .title div { font-size: 9.5pt; line-height: 1.45; color: #172033; }
+  .title b { color: #07101f; }
+
+  /* Information cards */
+  .section-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2.6mm; margin-top: 2.8mm;
+  }
+  .box {
+    border: .35mm solid #c9d1de; border-radius: 2.3mm;
+    padding: 2.8mm 3.5mm; background: #fff;
+    box-shadow: 0 .7mm 2mm rgba(15,23,42,.06);
+  }
+  .box.full { grid-column: 1 / -1; }
+  .box h3 {
+    margin: 0 0 1.8mm; padding-bottom: 1.25mm;
+    border-bottom: .3mm solid #d6dce6;
+    font-size: 10pt; letter-spacing: .55px; color: #07101f;
+  }
+  .box h3 span { color: #a77b0b; font-weight: 900; }
+  .line {
+    display: grid; grid-template-columns: 31% 69%;
+    gap: 1.5mm; margin: .9mm 0;
+    font-size: 9.2pt; line-height: 1.28;
+  }
+  .line .label { color: #334155; font-weight: 900; }
+  .line .value { color: #0f172a; font-weight: 800; }
+
+  .vehicle-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm;
+  }
+  .vehicle-item .label {
+    display: block; color: #475569; font-size: 7.7pt;
+    font-weight: 900; margin-bottom: .7mm; text-transform: uppercase;
+  }
+  .vehicle-item .value {
+    font-size: 9.2pt; font-weight: 900; color: #0f172a;
+    line-height: 1.15;
+  }
+
+  /* Distance */
+  .distance {
+    margin-top: 2.5mm; border-radius: 2.3mm; padding: 2.6mm 3.5mm;
+    background: #0b1220; color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .distance .label { font-size: 9.5pt; letter-spacing: .9px; font-weight: 900; }
+  .distance .value { font-size: 17pt; font-weight: 900; color: #f4d77d; }
+
+  /* Rental */
+  .rental {
+    margin-top: 2.5mm; padding: 2.7mm 3.5mm;
+    border: .45mm solid #d4af37; border-radius: 2.3mm;
+    background: linear-gradient(135deg,#fffdf5,#f8f3df);
+  }
+  .rental-head {
+    display: flex; justify-content: space-between;
+    align-items: center; gap: 4mm;
+  }
+  .rental-title {
+    font-size: 10.8pt; font-weight: 900;
+    color: #07101f; letter-spacing: .35px;
+  }
+  .rental-price {
+    font-size: 16pt; font-weight: 900;
+    color: #7b5a08; white-space: nowrap;
+  }
+  .rental-copy {
+    margin-top: 1.4mm; font-size: 8.4pt;
+    line-height: 1.32; color: #263144;
+  }
+
+  /* Charges */
+  .charges {
+    margin-top: 2.5mm; border: .35mm solid #cdd5e1;
+    border-radius: 2.3mm; overflow: hidden;
+  }
+  .charges-head {
+    padding: 2.1mm 3.5mm; background: #0b1220;
+    color: #fff; font-size: 10pt; font-weight: 900;
+    letter-spacing: .65px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 9.1pt; }
+  th {
+    background: #eee6c9; color: #111827; text-align: left;
+    padding: 1.6mm 3.5mm; border-bottom: .35mm solid #d4af37;
+    font-weight: 900;
+  }
+  td {
+    padding: 1.55mm 3.5mm; border-bottom: .25mm solid #e3e7ed;
+    color: #172033; font-weight: 650;
+  }
+  td:last-child, th:last-child { text-align: right; font-weight: 900; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* Grand total */
+  .grand {
+    margin-top: 2.5mm; background: #0b1220;
+    border: .45mm solid #d4af37; border-radius: 2.3mm;
+    padding: 2.8mm 3.8mm;
+    display: flex; align-items: center; justify-content: space-between;
+    color: #fff;
+  }
+  .grand .label {
+    font-size: 9.8pt; font-weight: 900; letter-spacing: .45px;
+  }
+  .grand .amount {
+    font-size: 20pt; font-weight: 900; color: #f4d77d;
+  }
+
+  /* Bottom block - kept inside page */
+  .bottom {
+    margin-top: 2.3mm; display: grid;
+    grid-template-columns: 1fr 39mm; gap: 3.5mm;
+    align-items: center;
+  }
+  .notes {
+    min-height: 15mm; max-height: 17mm;
+    overflow: hidden;
+    border: .35mm solid #cfd7e3; border-radius: 2.3mm;
+    padding: 2.3mm 3.2mm; background: #fafbfd;
+    font-size: 8pt; line-height: 1.3; color: #263144;
+  }
+  .notes b { color: #07101f; }
+  .contact {
+    margin-top: 1.5mm; font-size: 7.5pt;
+    color: #263144; line-height: 1.25;
+    white-space: nowrap;
+  }
+
+  /* Premium seal */
+  .seal { display: flex; justify-content: center; align-items: center; }
+  .seal-ring {
+    width: 36mm; height: 36mm;
+    border: 1.1mm solid #07101f;
+    outline: .65mm solid #d4af37;
+    outline-offset: -2.35mm;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 28%,#fffdf8 0%,#f8edca 62%,#e5cc79 100%);
+    box-shadow: 0 1mm 3mm rgba(7,16,31,.2);
+    position: relative;
+  }
+  .seal-ring:before {
+    content:""; position:absolute; inset:2.6mm;
+    border: .25mm dashed #a97e0e; border-radius:50%;
+  }
+  .seal-ring:after {
+    content:""; position:absolute; inset:5mm;
+    border: .22mm solid rgba(7,16,31,.35); border-radius:50%;
+  }
+  .seal-top {
+    font-size: 5.6pt; font-weight: 900;
+    letter-spacing: 1.1px; color:#765707; margin-bottom:.5mm;
+  }
+  .seal-crown { font-size: 9pt; line-height:1; color:#b58a16; margin-bottom:.4mm; }
+  .seal-r { font: 900 20pt Georgia,serif; color:#07101f; line-height:1; }
+  .seal-divider { width: 12mm; height:.3mm; background:#b58a16; margin:.7mm 0; }
+  .seal-check { font-size: 5.8pt; font-weight:900; color:#07101f; }
+  .seal-small { margin-top:.7mm; font-size:5.1pt; font-weight:900; color:#172033; letter-spacing:.35px; }
+  .seal-bottom { margin-top:.6mm; font-size:4.7pt; font-weight:900; letter-spacing:.55px; color:#765707; }
+
+  /* Footer is in normal flow, not absolute, so it cannot be cut off */
+  .footer {
+    margin: 2.2mm 0 0; border-top: .35mm solid #d4af37;
+    padding-top: 1.8mm; display:flex; justify-content:space-between;
+    gap:3mm; font-size: 6.9pt; color:#334155; font-weight:700;
+  }
+  .footer b { color:#07101f; }
   @media print {
-    html,body { width:210mm; height:297mm; background:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    html,body {
+      width:210mm; height:297mm; background:#fff !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
     .sheet { margin:0; }
   }
 </style>
