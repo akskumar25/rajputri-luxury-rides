@@ -9,10 +9,12 @@ type Trip = {
   id: string;
   tripNo: string;
   date: string;
+  endDate: string;
   customerName: string;
   customerMobile: string;
   tripType: string;
   reportingTime: string;
+  releaseTime: string;
   pickup: string;
   drop: string;
   vehicleNo: string;
@@ -39,10 +41,12 @@ const newTrip = (): Trip => ({
   id: crypto.randomUUID(),
   tripNo: `RT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
   date: today(),
+  endDate: today(),
   customerName: "",
   customerMobile: "",
   tripType: "Round Trip",
   reportingTime: "",
+  releaseTime: "",
   pickup: "",
   drop: "",
   vehicleNo: "",
@@ -101,7 +105,25 @@ function TripSheetPage() {
     setTrip((old) => ({ ...old, [key]: value }));
 
   const totalKm = Math.max(0, num(trip.closeKm) - num(trip.startKm));
-  const total = totalAmount(trip);
+
+  const rentalDays = useMemo(() => {
+    if (trip.tripType !== "Full Day Rental") return 0;
+
+    const start = new Date(`${trip.date}T${trip.reportingTime || "00:00"}`);
+    const end = new Date(`${trip.endDate || trip.date}T${trip.releaseTime || trip.reportingTime || "00:00"}`);
+    const hours = !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())
+      ? Math.max(0, (end.getTime() - start.getTime()) / 3600000)
+      : 0;
+
+    const daysByHours = hours > 0 ? Math.ceil(hours / 12) : 1;
+    const daysByKm = totalKm > 0 ? Math.ceil(totalKm / 220) : 1;
+    return Math.max(1, daysByHours, daysByKm);
+  }, [trip.tripType, trip.date, trip.endDate, trip.reportingTime, trip.releaseTime, totalKm]);
+
+  const rentalAmount = rentalDays * 2000;
+  const total = trip.tripType === "Full Day Rental"
+    ? rentalAmount + num(trip.toll) + num(trip.parking) + num(trip.permit) + num(trip.driverBata) + num(trip.other)
+    : totalAmount(trip);
 
   const save = (item = trip) => {
     const next = [item, ...history.filter((x) => x.id !== item.id)];
@@ -174,7 +196,19 @@ function TripSheetPage() {
     });
   }, [history, selectedMonth, search]);
 
-  const filteredTotal = filtered.reduce((sum, x) => sum + totalAmount(x), 0);
+  const filteredTotal = filtered.reduce((sum, item) => {
+    if (item.tripType === "Full Day Rental") {
+      const km = Math.max(0, num(item.closeKm) - num(item.startKm));
+      const start = new Date(`${item.date}T${item.reportingTime || "00:00"}`);
+      const end = new Date(`${item.endDate || item.date}T${item.releaseTime || item.reportingTime || "00:00"}`);
+      const hours = !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())
+        ? Math.max(0, (end.getTime() - start.getTime()) / 3600000)
+        : 0;
+      const days = Math.max(1, hours > 0 ? Math.ceil(hours / 12) : 1, km > 0 ? Math.ceil(km / 220) : 1);
+      return sum + days * 2000 + num(item.toll) + num(item.parking) + num(item.permit) + num(item.driverBata) + num(item.other);
+    }
+    return sum + totalAmount(item);
+  }, 0);
 
   const openTrip = (item: Trip) => {
     setTrip(item);
@@ -240,9 +274,10 @@ function TripSheetPage() {
                     <option>Outstation</option>
                     <option>Airport Transfer</option>
                     <option>Temple Tour</option>
+                    <option>Full Day Rental</option>
                   </select>
                 </Field>
-                <Field label="Reporting Time">
+                <Field label={trip.tripType === "Full Day Rental" ? "Start Time" : "Reporting Time"}>
                   <input type="time" value={trip.reportingTime} onChange={(e) => update("reportingTime", e.target.value)} />
                 </Field>
                 <Field label="Pickup">
@@ -251,7 +286,32 @@ function TripSheetPage() {
                 <Field label="Drop">
                   <input value={trip.drop} onChange={(e) => update("drop", e.target.value)} />
                 </Field>
+
+                {trip.tripType === "Full Day Rental" && (
+                  <>
+                    <Field label="Rental End Date">
+                      <input type="date" value={trip.endDate} onChange={(e) => update("endDate", e.target.value)} />
+                    </Field>
+                    <Field label="Release / End Time">
+                      <input type="time" value={trip.releaseTime} onChange={(e) => update("releaseTime", e.target.value)} />
+                    </Field>
+                  </>
+                )}
               </div>
+
+              {trip.tripType === "Full Day Rental" && (
+                <div className="rental-rule-card">
+                  <div className="rental-rule-title">FULL DAY RENTAL — ₹2,000 / DAY</div>
+                  <div className="rental-rule-grid">
+                    <div><b>12 HOURS</b><span>OR</span><b>200 KM</b></div>
+                    <div><b>200 + 20 KM</b><span>GRACE KM</span></div>
+                    <div><b>220 KM+</b><span>NEXT DAY ₹2,000</span></div>
+                  </div>
+                  <p>Daily Rental is a fixed package charge. Lower KM usage does not reduce the daily rental. KM-based rate calculation does not apply.</p>
+                  <p><b>Fuel, Toll, Parking, Permit and other applicable charges are payable by the Customer.</b></p>
+                  <div className="rental-calculation">Rental Days: <strong>{rentalDays}</strong> × ₹2,000 = <strong>{inr(rentalAmount)}</strong></div>
+                </div>
+              )}
             </section>
 
             <section className="form-card">
@@ -283,9 +343,17 @@ function TripSheetPage() {
             </section>
 
             <section className="form-card">
-              <CardTitle title="Charge Details" />
+              <CardTitle title={trip.tripType === "Full Day Rental" ? "Rental & Other Charges" : "Charge Details"} />
+              {trip.tripType === "Full Day Rental" && (
+                <div className="fixed-rental">
+                  <span>DAILY RENTAL</span>
+                  <strong>{rentalDays} × ₹2,000 = {inr(rentalAmount)}</strong>
+                </div>
+              )}
               <div className="charge-grid">
-                <AmountField label="Vehicle Charge" value={trip.vehicleCharge} onChange={(v) => update("vehicleCharge", v)} />
+                {trip.tripType !== "Full Day Rental" && (
+                  <AmountField label="Vehicle Charge" value={trip.vehicleCharge} onChange={(v) => update("vehicleCharge", v)} />
+                )}
                 <AmountField label="Toll" value={trip.toll} onChange={(v) => update("toll", v)} />
                 <AmountField label="Parking" value={trip.parking} onChange={(v) => update("parking", v)} />
                 <AmountField label="Permit" value={trip.permit} onChange={(v) => update("permit", v)} />
@@ -346,7 +414,14 @@ function TripSheetPage() {
                       <span>{item.pickup || "-"} → {item.drop || "-"}</span>
                     </div>
                     <div className="history-actions">
-                      <strong>{inr(totalAmount(item))}</strong>
+                      <strong>{inr(item.tripType === "Full Day Rental" ? (() => {
+                        const km = Math.max(0, num(item.closeKm) - num(item.startKm));
+                        const start = new Date(`${item.date}T${item.reportingTime || "00:00"}`);
+                        const end = new Date(`${item.endDate || item.date}T${item.releaseTime || item.reportingTime || "00:00"}`);
+                        const hours = !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) ? Math.max(0, (end.getTime() - start.getTime()) / 3600000) : 0;
+                        const days = Math.max(1, hours > 0 ? Math.ceil(hours / 12) : 1, km > 0 ? Math.ceil(km / 220) : 1);
+                        return days * 2000 + num(item.toll) + num(item.parking) + num(item.permit) + num(item.driverBata) + num(item.other);
+                      })() : totalAmount(item))}</strong>
                       <button onClick={() => openTrip(item)}>OPEN</button>
                       <button className="delete-btn" onClick={() => deleteTrip(item.id)}>DELETE</button>
                     </div>
@@ -359,7 +434,7 @@ function TripSheetPage() {
       </div>
 
       <div className="print-area">
-        <PrintableTripSheet trip={trip} totalKm={totalKm} total={total} />
+        <PrintableTripSheet trip={trip} totalKm={totalKm} total={total} rentalDays={rentalDays} rentalAmount={rentalAmount} />
       </div>
 
       <style>{`
@@ -640,6 +715,55 @@ function TripSheetPage() {
           color: #888;
         }
 
+        .rental-rule-card { margin-top: 17px; padding: 16px; border: 2px solid #d2ae67; border-radius: 9px; background: linear-gradient(135deg,#fffaf0,#f7edd7); }
+        .rental-rule-title { color:#6e4514; font-size:18px; font-weight:900; }
+        .rental-rule-grid { margin:13px 0; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .rental-rule-grid div { padding:10px; display:flex; flex-direction:column; gap:3px; align-items:center; text-align:center; background:#fff; border:1px solid #ead9b8; border-radius:7px; }
+        .rental-rule-grid b { color:#2b2118; font-size:15px; }
+        .rental-rule-grid span { color:#826d50; font-size:10px; font-weight:800; }
+        .rental-rule-card p { margin:7px 0; color:#554a3e; font-size:13px; line-height:1.5; }
+        .rental-calculation { margin-top:11px; padding:11px; border-radius:6px; background:#17110e; color:white; font-size:14px; }
+        .rental-calculation strong { color:#e6bb63; font-size:17px; }
+        .fixed-rental { margin-bottom:15px; padding:14px; display:flex; justify-content:space-between; border-radius:7px; background:#17110e; color:white; font-size:15px; font-weight:900; }
+        .fixed-rental strong { color:#e6bb63; font-size:18px; }
+
+        /* A4 print layout */
+        .print-border { width:100%; height:100%; border:1.4px solid #a77a2b; padding:5.5mm; position:relative; overflow:hidden; background:#fff; }
+        .print-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #d9c18f; padding-bottom:3.5mm; }
+        .logo-area { display:flex; align-items:center; gap:3.5mm; }
+        .logo-name { font-family:Georgia,serif; font-size:25px; line-height:1; font-weight:900; letter-spacing:3px; color:#9a6b1e; }
+        .logo-sub { margin-top:1.5mm; font-size:11px; font-weight:900; letter-spacing:2.5px; color:#17110e; }
+        .logo-tagline { margin-top:1.5mm; font-size:8px; color:#685a49; font-weight:700; }
+        .trip-title-box { text-align:right; font-size:9px; }
+        .trip-title { display:inline-block; padding:2mm 4mm; background:#17110e; color:#e6bb63; border-radius:1.5mm; font-size:19px; font-weight:900; letter-spacing:1px; margin-bottom:2mm; }
+        .service-line { margin-top:2.5mm; text-align:center; font-size:8px; font-weight:800; color:#6b5a44; letter-spacing:.3px; }
+        .print-section-heading { margin-top:3mm; padding:2.2mm 3mm; background:#17110e; color:#fff; font-size:9px; font-weight:900; letter-spacing:.5px; }
+        .info-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:3mm; padding:3mm; border:1px solid #ded7ce; border-top:none; }
+        .vehicle-grid { background:#f8f0e1; border:none; }
+        .print-info { min-width:0; }
+        .print-label { font-size:7px; text-transform:uppercase; letter-spacing:.6px; color:#826f59; font-weight:900; }
+        .print-value { margin-top:1mm; min-height:4mm; font-size:10px; font-weight:800; word-break:break-word; }
+        .distance-strip { margin-top:2.5mm; padding:2.5mm 4mm; display:flex; justify-content:space-between; align-items:center; background:#f2dfb6; border:1px solid #d1ad65; font-size:9px; font-weight:900; }
+        .distance-strip b { font-size:16px; }
+        .charge-table { width:100%; border-collapse:collapse; font-size:9px; }
+        .charge-table th { padding:1.8mm; border:1px solid #d8d0c6; background:#f4e5c6; }
+        .charge-table td { padding:1.8mm; border:1px solid #e2ddd7; }
+        .charge-table td:first-child { text-align:center; }
+        .charge-table td:last-child { text-align:right; font-weight:800; }
+        .total-row td { background:#e9c879; border-color:#c7a45f; font-size:12px; font-weight:900; }
+        .notes-box { margin-top:2.5mm; padding:2mm 3mm; border:1px solid #ddd5ca; font-size:8px; line-height:1.4; }
+        .bottom-area { margin-top:3mm; padding-top:2.5mm; border-top:1px solid #d8c39a; display:grid; grid-template-columns:1fr 82px 1fr; align-items:center; gap:4mm; }
+        .contact-block, .digital-block { font-size:8px; line-height:1.55; }
+        .contact-brand { font-size:10px; font-weight:900; color:#754b14; }
+        .digital-block { text-align:right; }
+        .distance-big { font-size:16px; font-weight:900; }
+        .distance-caption { font-size:8px; font-weight:900; }
+        .digital-note { margin-top:1mm; }
+        .footer-line { position:absolute; bottom:3mm; left:5mm; right:5mm; padding-top:2mm; border-top:1px solid #d7c093; display:flex; justify-content:space-between; font-size:7px; color:#746a60; font-weight:700; }
+
+        .rental-print-terms { margin-top:2.5mm; padding:2.2mm 3mm; border:1px solid #d3ae68; background:#fff9ed; font-size:7.5px; line-height:1.4; }
+        .rental-print-title { color:#704713; font-size:9px; font-weight:900; margin-bottom:1mm; }
+
         .print-area { display: none; }
 
         @media(max-width: 950px) {
@@ -656,7 +780,7 @@ function TripSheetPage() {
             align-items: flex-start;
             flex-direction: column;
           }
-          .form-grid, .charge-grid { grid-template-columns: 1fr; }
+          .form-grid, .charge-grid, .rental-rule-grid { grid-template-columns: 1fr; }
           .workspace { padding: 9px; }
           .form-card { padding: 15px; }
         }
@@ -839,19 +963,33 @@ function PrintableTripSheet({
   trip,
   totalKm,
   total,
+  rentalDays,
+  rentalAmount,
 }: {
   trip: Trip;
   totalKm: number;
   total: number;
+  rentalDays: number;
+  rentalAmount: number;
 }) {
-  const charges = [
-    ["Vehicle Charge", trip.vehicleCharge],
-    ["Toll", trip.toll],
-    ["Parking", trip.parking],
-    ["Permit", trip.permit],
-    ["Driver Bata", trip.driverBata],
-    ["Other Charges", trip.other],
-  ];
+  const isRental = trip.tripType === "Full Day Rental";
+  const charges = isRental
+    ? [
+        ["Daily Rental", rentalAmount],
+        ["Toll", num(trip.toll)],
+        ["Parking", num(trip.parking)],
+        ["Permit", num(trip.permit)],
+        ["Driver Bata", num(trip.driverBata)],
+        ["Other Charges", num(trip.other)],
+      ]
+    : [
+        ["Vehicle Charge", num(trip.vehicleCharge)],
+        ["Toll", num(trip.toll)],
+        ["Parking", num(trip.parking)],
+        ["Permit", num(trip.permit)],
+        ["Driver Bata", num(trip.driverBata)],
+        ["Other Charges", num(trip.other)],
+      ];
 
   return (
     <div className="print-sheet">
@@ -862,36 +1000,32 @@ function PrintableTripSheet({
             <div>
               <div className="logo-name">RAJPUTRI</div>
               <div className="logo-sub">TOURS &amp; TRAVELS</div>
-              <div className="logo-tagline">
-                Safe Journey · Happy Memories
-              </div>
+              <div className="logo-tagline">Safe Journey · Happy Memories</div>
             </div>
           </div>
-
           <div className="trip-title-box">
             <div className="trip-title">TRIP SHEET</div>
             <div>Trip No: <b>{trip.tripNo}</b></div>
-            <div>Date: <b>{trip.date}</b></div>
+            <div style={{ marginTop: "1mm" }}>Date: <b>{trip.date}</b></div>
           </div>
         </div>
 
-        <div className="service-line">
-          Airport Pickup &amp; Drop · Temple Tours · Outstation Taxi
-        </div>
+        <div className="service-line">Airport Pickup &amp; Drop · Temple Tours · Outstation Taxi · Car Rental</div>
 
         <div className="print-section-heading">CUSTOMER &amp; TRIP DETAILS</div>
-
         <div className="info-grid">
           <Info label="Customer Name" value={trip.customerName} />
           <Info label="Customer Mobile" value={trip.customerMobile} />
           <Info label="Trip Type" value={trip.tripType} />
-          <Info label="Reporting Time" value={trip.reportingTime} />
+          <Info label={isRental ? "Start Time" : "Reporting Time"} value={trip.reportingTime} />
           <Info label="Pickup" value={trip.pickup} />
           <Info label="Drop" value={trip.drop} />
+          {isRental && <Info label="Rental End Date" value={trip.endDate} />}
+          {isRental && <Info label="Release / End Time" value={trip.releaseTime} />}
+          {isRental && <Info label="Package" value="₹2,000 / 12 Hours / 200 KM" />}
         </div>
 
-        <div className="print-section-heading dark">VEHICLE &amp; DRIVER DETAILS</div>
-
+        <div className="print-section-heading">VEHICLE &amp; DRIVER DETAILS</div>
         <div className="info-grid vehicle-grid">
           <Info label="Vehicle No" value={trip.vehicleNo} />
           <Info label="Vehicle" value={trip.vehicle} />
@@ -906,8 +1040,22 @@ function PrintableTripSheet({
           <b>{totalKm.toLocaleString("en-IN")} KM</b>
         </div>
 
-        <div className="print-section-heading">CHARGE DETAILS</div>
+        {isRental && (
+          <div className="rental-print-terms">
+            <div className="rental-print-title">DAILY RENTAL TERMS — ₹2,000 / DAY</div>
+            <div>
+              One Day Rental = <b>12 Hours or 200 KM</b>. The daily rental is a fixed package charge;
+              lower KM usage does not reduce the charge and KM-based rate calculation does not apply.
+            </div>
+            <div>
+              After 200 KM, up to <b>20 additional KM</b> is allowed without extra charge.
+              Beyond 220 KM, the <b>next day rental charge of ₹2,000</b> applies.
+            </div>
+            <div><b>Fuel, Toll, Parking, Permit and other applicable charges are payable by the Customer.</b></div>
+          </div>
+        )}
 
+        <div className="print-section-heading">CHARGE DETAILS</div>
         <table className="charge-table">
           <thead>
             <tr>
@@ -920,31 +1068,27 @@ function PrintableTripSheet({
             {charges.map(([label, value], index) => (
               <tr key={label}>
                 <td>{index + 1}</td>
-                <td>{label}</td>
-                <td>{num(value).toLocaleString("en-IN")}</td>
+                <td>{label}{label === "Daily Rental" ? ` (${rentalDays} day${rentalDays > 1 ? "s" : ""})` : ""}</td>
+                <td>{money(value as number)}</td>
               </tr>
             ))}
             <tr className="total-row">
               <td colSpan={2}>GRAND TOTAL</td>
-              <td>{inr(total)}</td>
+              <td>{money(total)}</td>
             </tr>
           </tbody>
         </table>
 
-        <div className="notes-box">
-          <b>Notes:</b> {trip.notes || "-"}
-        </div>
+        <div className="notes-box"><b>Notes:</b> {trip.notes || "-"}</div>
 
         <div className="bottom-area">
           <div className="contact-block">
-            <div className="contact-brand">RAJPUTRI TRAVELS</div>
+            <div className="contact-brand">RAJPUTRI TOURS &amp; TRAVELS</div>
             <div>8489999568</div>
             <div>www.rajputritravels.com</div>
             <div>blog.rajputritravels.com</div>
           </div>
-
           <DigitalSeal />
-
           <div className="digital-block">
             <div className="distance-big">{totalKm.toLocaleString("en-IN")} KM</div>
             <div className="distance-caption">TOTAL DISTANCE</div>
