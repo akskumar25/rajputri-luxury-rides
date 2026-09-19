@@ -105,9 +105,9 @@ const formatDateTime = (value: string) => {
   });
 };
 
-const createTrip = (): Trip => ({
+const createTrip = (tripNo = "RT-0001"): Trip => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  tripNo: "",
+  tripNo,
   date: todayString(),
   endDate: todayString(),
   customerName: "",
@@ -172,46 +172,28 @@ function RoyalLogo({ small = false }: { small?: boolean }) {
 
 function DigitalSeal() {
   return (
-    <svg width="108" height="108" viewBox="0 0 120 120" aria-label="Official digital seal">
-      <circle cx="60" cy="60" r="56" fill="white" stroke="#171717" strokeWidth="4" />
-      <circle cx="60" cy="60" r="47" fill="none" stroke="#c9a227" strokeWidth="2.5" />
+    <svg width="132" height="132" viewBox="0 0 140 140" aria-label="Rajputri verified digital seal">
+      <defs>
+        <radialGradient id="sealGold" cx="50%" cy="35%" r="70%">
+          <stop offset="0%" stopColor="#fffdf4" />
+          <stop offset="72%" stopColor="#f5e8bd" />
+          <stop offset="100%" stopColor="#e3c76a" />
+        </radialGradient>
+      </defs>
+      <circle cx="70" cy="70" r="66" fill="#0b1220" stroke="#d4af37" strokeWidth="3" />
+      <circle cx="70" cy="70" r="58" fill="url(#sealGold)" stroke="#ffffff" strokeWidth="2" />
+      <circle cx="70" cy="70" r="51" fill="none" stroke="#0b1220" strokeWidth="1.5" strokeDasharray="2 3" />
       <path
-        d="M60 25 L64 35 L75 35 L66 42 L70 52 L60 46 L50 52 L54 42 L45 35 L56 35 Z"
-        fill="#c9a227"
+        d="M70 27 L75 38 L88 38 L78 46 L82 58 L70 51 L58 58 L62 46 L52 38 L65 38 Z"
+        fill="#b58a16"
+        stroke="#0b1220"
+        strokeWidth="1"
       />
-      <text
-        x="60"
-        y="70"
-        textAnchor="middle"
-        fontSize="23"
-        fontWeight="900"
-        fontFamily="Arial, sans-serif"
-        fill="#111"
-      >
-        R
-      </text>
-      <text
-        x="60"
-        y="84"
-        textAnchor="middle"
-        fontSize="8"
-        fontWeight="800"
-        fontFamily="Arial, sans-serif"
-        fill="#111"
-      >
-        ✓ OFFICIAL
-      </text>
-      <text
-        x="60"
-        y="96"
-        textAnchor="middle"
-        fontSize="6.5"
-        fontWeight="700"
-        fontFamily="Arial, sans-serif"
-        fill="#555"
-      >
-        DIGITAL TRIP SHEET
-      </text>
+      <text x="70" y="78" textAnchor="middle" fontSize="31" fontWeight="900" fontFamily="Georgia, serif" fill="#0b1220">R</text>
+      <line x1="48" y1="84" x2="92" y2="84" stroke="#b58a16" strokeWidth="1.4" />
+      <text x="70" y="96" textAnchor="middle" fontSize="8.2" fontWeight="900" fontFamily="Arial, sans-serif" fill="#0b1220">✓ VERIFIED OFFICIAL</text>
+      <text x="70" y="107" textAnchor="middle" fontSize="8" fontWeight="900" letterSpacing="1.4" fontFamily="Arial, sans-serif" fill="#8b6810">RAJPUTRI</text>
+      <text x="70" y="118" textAnchor="middle" fontSize="6.4" fontWeight="900" letterSpacing=".5" fontFamily="Arial, sans-serif" fill="#172033">DIGITAL TRIP SHEET</text>
     </svg>
   );
 }
@@ -404,7 +386,7 @@ function TripSheet() {
 
   const generateTripNo = () => {
     const max = history.reduce((n, item) => {
-      const match = item.tripNo.match(/(\d+)$/);
+      const match = String(item.tripNo || "").match(/^RT-(\d+)$/i);
       return Math.max(n, match ? Number(match[1]) : 0);
     }, 0);
     return `RT-${String(max + 1).padStart(4, "0")}`;
@@ -426,7 +408,7 @@ function TripSheet() {
   };
 
   const newTrip = () => {
-    setTrip(createTrip());
+    setTrip(createTrip(generateTripNo()));
     setSavedMessage("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -516,7 +498,15 @@ function TripSheet() {
 
     const seal = `
       <div class="seal">
-        <div class="seal-ring"><div class="seal-r">R</div><div class="seal-check">✓ OFFICIAL</div><div class="seal-small">DIGITAL TRIP SHEET</div></div>
+        <div class="seal-ring">
+          <div class="seal-top">RAJPUTRI</div>
+          <div class="seal-crown">♛</div>
+          <div class="seal-r">R</div>
+          <div class="seal-divider"></div>
+          <div class="seal-check">✓ VERIFIED OFFICIAL</div>
+          <div class="seal-small">DIGITAL TRIP SHEET</div>
+          <div class="seal-bottom">TOURS &amp; TRAVELS</div>
+        </div>
       </div>`;
 
     const vehicleCharge = trip.tripType === "Full Day Rental" ? rentalAmount : regularVehicleCharge;
@@ -526,67 +516,79 @@ function TripSheet() {
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Trip Sheet - ${esc(trip.tripNo || "Draft")}</title>
+<title>Trip Sheet - ${esc(trip.tripNo || generateTripNo())}</title>
 <style>
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; width:210mm; min-height:297mm; background:#eef1f5; }
+  html, body { margin:0; padding:0; width:210mm; min-height:297mm; background:#e9edf3; }
   body { font-family: Arial, Helvetica, sans-serif; color:#172033; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   .sheet { width:210mm; height:297mm; margin:0 auto; background:#fff; position:relative; overflow:hidden; }
-  .top-band { height:9mm; background:#0b1220; border-bottom:1.4mm solid #d4af37; }
-  .inner { padding:7mm 9mm 5mm; height:288mm; }
-  .header { height:35mm; display:flex; align-items:center; justify-content:space-between; border-bottom:0.45mm solid #d4af37; }
+  .top-band { height:10mm; background:#07101f; border-bottom:1.6mm solid #d4af37; }
+  .inner { padding:6mm 8.5mm 4mm; height:287mm; }
+  .header { height:39mm; display:flex; align-items:center; justify-content:space-between; border-bottom:0.45mm solid #d4af37; }
   .brand { display:flex; align-items:center; gap:4mm; }
-  .brand h1 { margin:0; font:900 25pt Georgia,serif; letter-spacing:2.2px; color:#0b1220; }
-  .brand .sub { margin-top:1mm; font-size:9pt; font-weight:900; letter-spacing:2px; color:#9b7b12; }
-  .brand .tag { margin-top:1.8mm; font-size:7.5pt; color:#667085; letter-spacing:.5px; }
+  .brand h1 { margin:0; font:900 30pt Georgia,serif; letter-spacing:2.2px; color:#0b1220; }
+  .brand .sub { margin-top:1.2mm; font-size:10.5pt; font-weight:900; letter-spacing:2px; color:#9b7b12; }
+  .brand .tag { margin-top:1.8mm; font-size:9pt; color:#172033; letter-spacing:.5px; }
   .title { text-align:right; }
-  .title h2 { margin:0; font:900 22pt Georgia,serif; letter-spacing:1.4px; color:#0b1220; }
+  .title h2 { margin:0; font:900 26pt Georgia,serif; letter-spacing:1.4px; color:#0b1220; }
   .title .goldline { width:42mm; height:1mm; background:#d4af37; margin:2mm 0 2mm auto; }
-  .title div { font-size:8.5pt; line-height:1.55; color:#4b5565; }
+  .title div { font-size:10pt; line-height:1.5; color:#172033; }
   .title b { color:#182233; }
   .section-grid { display:grid; grid-template-columns:1fr 1fr; gap:3.2mm; margin-top:4mm; }
-  .box { border:.35mm solid #d8dde6; border-radius:2.5mm; padding:3.5mm 4mm; background:#fff; box-shadow:0 1mm 3mm rgba(15,23,42,.05); }
+  .box { border:.4mm solid #cfd6e2; border-radius:2.5mm; padding:3.5mm 4mm; background:#fff; box-shadow:0 1mm 3mm rgba(15,23,42,.05); }
   .box.full { grid-column:1 / -1; }
-  .box h3 { margin:0 0 2.5mm; padding-bottom:1.7mm; border-bottom:.3mm solid #e5e7eb; font-size:9pt; letter-spacing:.7px; color:#0b1220; }
+  .box h3 { margin:0 0 2.5mm; padding-bottom:1.7mm; border-bottom:.3mm solid #cfd6e2; font-size:11pt; letter-spacing:.7px; color:#0b1220; }
   .box h3 span { color:#b18a19; }
-  .line { display:grid; grid-template-columns:34% 66%; gap:2mm; margin:1.25mm 0; font-size:8.6pt; line-height:1.35; }
-  .line .label { color:#667085; font-weight:800; }
+  .line { display:grid; grid-template-columns:34% 66%; gap:2mm; margin:1.25mm 0; font-size:10pt; line-height:1.38; }
+  .line .label { color:#253247; font-weight:900; }
   .line .value { color:#111827; font-weight:700; }
   .vehicle-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; }
-  .vehicle-item .label { display:block; color:#667085; font-size:7.2pt; font-weight:800; margin-bottom:1mm; text-transform:uppercase; }
-  .vehicle-item .value { font-size:8.6pt; font-weight:800; }
+  .vehicle-item .label { display:block; color:#172033; font-size:8.5pt; font-weight:800; margin-bottom:1mm; text-transform:uppercase; }
+  .vehicle-item .value { font-size:10pt; font-weight:900; color:#111827; }
   .distance { margin-top:3.2mm; border-radius:2.5mm; padding:3mm 4mm; background:#0b1220; color:#fff; display:flex; align-items:center; justify-content:space-between; }
-  .distance .label { font-size:8pt; letter-spacing:1px; font-weight:900; }
-  .distance .value { font-size:14pt; font-weight:900; color:#f4d77d; }
+  .distance .label { font-size:10pt; letter-spacing:1px; font-weight:900; }
+  .distance .value { font-size:18pt; font-weight:900; color:#f4d77d; }
   .rental { margin-top:3.2mm; padding:3.5mm 4mm; border:1px solid #d4af37; border-radius:2.5mm; background:linear-gradient(135deg,#fffdf5,#f8f4e6); }
   .rental-head { display:flex; justify-content:space-between; align-items:center; gap:5mm; }
-  .rental-title { font-size:10pt; font-weight:900; color:#0b1220; letter-spacing:.5px; }
-  .rental-price { font-size:14pt; font-weight:900; color:#8a6910; white-space:nowrap; }
-  .rental-copy { margin-top:2mm; font-size:7.7pt; line-height:1.48; color:#374151; }
+  .rental-title { font-size:12pt; font-weight:900; color:#0b1220; letter-spacing:.5px; }
+  .rental-price { font-size:18pt; font-weight:900; color:#8a6910; white-space:nowrap; }
+  .rental-copy { margin-top:2mm; font-size:9.2pt; line-height:1.45; color:#273449; }
   .charges { margin-top:3.2mm; border:1px solid #d8dde6; border-radius:2.5mm; overflow:hidden; }
-  .charges-head { padding:2.5mm 4mm; background:#0b1220; color:#fff; font-size:9pt; font-weight:900; letter-spacing:.7px; }
-  table { width:100%; border-collapse:collapse; font-size:8.2pt; }
-  th { background:#f1ead2; color:#172033; text-align:left; padding:2mm 4mm; border-bottom:.35mm solid #d4af37; }
-  td { padding:1.7mm 4mm; border-bottom:.25mm solid #e5e7eb; }
+  .charges-head { padding:2.5mm 4mm; background:#0b1220; color:#fff; font-size:11pt; font-weight:900; letter-spacing:.8px; }
+  table { width:100%; border-collapse:collapse; font-size:10pt; }
+  th { background:#f1ead2; color:#111827; text-align:left; padding:2mm 4mm; border-bottom:.35mm solid #d4af37; }
+  td { padding:2.1mm 4mm; border-bottom:.25mm solid #e5e7eb; }
   td:last-child, th:last-child { text-align:right; font-weight:800; }
   tr:last-child td { border-bottom:0; }
   .grand { margin-top:3mm; background:#0b1220; border:1px solid #d4af37; border-radius:2.5mm; padding:3.5mm 4mm; display:flex; align-items:center; justify-content:space-between; color:#fff; }
-  .grand .label { font-size:8.5pt; font-weight:900; letter-spacing:.6px; }
-  .grand .amount { font-size:18pt; font-weight:900; color:#f4d77d; }
-  .bottom { margin-top:3.2mm; display:grid; grid-template-columns:1fr 35mm; gap:4mm; align-items:center; }
-  .notes { min-height:19mm; border:.35mm solid #d8dde6; border-radius:2.5mm; padding:3mm 4mm; background:#fafbfc; font-size:7.7pt; line-height:1.5; }
+  .grand .label { font-size:11pt; font-weight:900; letter-spacing:.6px; }
+  .grand .amount { font-size:23pt; font-weight:900; color:#f4d77d; }
+  .bottom { margin-top:2.8mm; display:grid; grid-template-columns:1fr 48mm; gap:4mm; align-items:center; }
+  .notes { min-height:19mm; border:.35mm solid #d8dde6; border-radius:2.5mm; padding:3mm 4mm; background:#fafbfc; font-size:9pt; line-height:1.48; color:#273449; }
   .notes b { color:#0b1220; }
-  .contact { margin-top:2.2mm; font-size:7.2pt; color:#596273; line-height:1.45; }
+  .contact { margin-top:2.2mm; font-size:8.5pt; color:#172033; line-height:1.45; }
   .seal { display:flex; justify-content:center; align-items:center; }
-  .seal-ring { width:29mm; height:29mm; border:1mm solid #0b1220; outline:.45mm solid #d4af37; outline-offset:-2mm; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#fff; }
-  .seal-r { font:900 15pt Georgia,serif; color:#0b1220; line-height:1; }
-  .seal-check { margin-top:1mm; font-size:6.5pt; font-weight:900; color:#0b1220; }
-  .seal-small { margin-top:1mm; font-size:5pt; font-weight:900; color:#777; letter-spacing:.3px; }
-  .footer { position:absolute; left:9mm; right:9mm; bottom:4mm; border-top:.35mm solid #d4af37; padding-top:2.2mm; display:flex; justify-content:space-between; font-size:6.7pt; color:#667085; }
+  .seal-ring {
+    width:46mm; height:46mm; border:1.25mm solid #07101f; outline:.7mm solid #d4af37;
+    outline-offset:-2.8mm; border-radius:50%; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:radial-gradient(circle at 50% 30%,#fffdf7 0%,#f6edcf 68%,#ead89b 100%);
+    box-shadow:0 1.5mm 4mm rgba(7,16,31,.22); position:relative;
+  }
+  .seal-ring:before, .seal-ring:after { content:""; position:absolute; border-radius:50%; pointer-events:none; }
+  .seal-ring:before { inset:3.3mm; border:0.3mm dashed #a97e0e; }
+  .seal-ring:after { inset:6.2mm; border:0.25mm solid rgba(7,16,31,.28); }
+  .seal-top { font-size:6.5pt; font-weight:900; letter-spacing:1.4px; color:#7f5e0a; margin-bottom:1mm; }
+  .seal-crown { font-size:12pt; line-height:1; color:#b58a16; margin-bottom:.8mm; }
+  .seal-r { font:900 25pt Georgia,serif; color:#07101f; line-height:1; }
+  .seal-divider { width:15mm; height:.35mm; background:#b58a16; margin:1.1mm 0; }
+  .seal-check { margin-top:.5mm; font-size:7pt; font-weight:900; color:#07101f; }
+  .seal-small { margin-top:1.2mm; font-size:5.8pt; font-weight:900; color:#172033; letter-spacing:.55px; }
+  .seal-bottom { margin-top:1.1mm; font-size:5.4pt; font-weight:900; letter-spacing:.8px; color:#7f5e0a; }
+  .footer { position:absolute; left:9mm; right:9mm; bottom:3.5mm; border-top:.35mm solid #d4af37; padding-top:2.2mm; display:flex; justify-content:space-between; font-size:7.5pt; color:#263449; }
   .footer b { color:#0b1220; }
   @media print {
-    html,body { width:210mm; height:297mm; background:#fff !important; }
+    html,body { width:210mm; height:297mm; background:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
     .sheet { margin:0; }
   }
 </style>
@@ -597,7 +599,7 @@ function TripSheet() {
   <div class="inner">
     <div class="header">
       <div class="brand">${logo}<div><h1>RAJPUTRI</h1><div class="sub">TOURS &amp; TRAVELS</div><div class="tag">Safe Journey · Happy Memories</div></div></div>
-      <div class="title"><h2>TRIP SHEET</h2><div class="goldline"></div><div><b>Trip No:</b> ${esc(trip.tripNo || "DRAFT")}</div><div><b>Date:</b> ${esc(formatDate(trip.date))}</div></div>
+      <div class="title"><h2>TRIP SHEET</h2><div class="goldline"></div><div><b>Trip No:</b> ${esc(trip.tripNo || generateTripNo())}</div><div><b>Date:</b> ${esc(formatDate(trip.date))}</div></div>
     </div>
 
     <div class="section-grid">
@@ -665,13 +667,13 @@ function TripSheet() {
     <div className="trip-app">
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #f4f5f7; color: #171717; font-family: Arial, Helvetica, sans-serif; }
+        body { margin: 0; background: linear-gradient(135deg,#eef1f6 0%,#f8f5ec 52%,#eef1f6 100%); color: #101827; font-family: Arial, Helvetica, sans-serif; }
         button, input, select, textarea { font: inherit; }
         button { cursor: pointer; }
         .trip-app { min-height: 100vh; }
         .topbar {
           position: sticky; top: 0; z-index: 30;
-          background: #111; color: white; border-bottom: 3px solid #c9a227;
+          background: linear-gradient(90deg,#07101f,#101827 55%,#07101f); color: white; border-bottom: 3px solid #d4af37;
           padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
         }
         .brand { display: flex; align-items: center; gap: 10px; }
@@ -686,7 +688,7 @@ function TripSheet() {
         .btn.gold { background: #c9a227; color: #111; border-color: #c9a227; }
         .btn.green { background: #168b49; color: white; border-color: #168b49; }
         .btn.red { background: #fff; color: #a91f1f; border-color: #e4baba; }
-        .container { max-width: 1180px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1220px; margin: 0 auto; padding: 24px; }
         .notice {
           background: #fffdf4; border: 1px solid #e6d28b; border-left: 5px solid #c9a227;
           padding: 12px 14px; border-radius: 10px; margin-bottom: 16px;
@@ -694,29 +696,29 @@ function TripSheet() {
         .notice strong { display: block; margin-bottom: 4px; }
         .saved { color: #167743; font-weight: 800; font-size: 13px; }
         .card {
-          background: white; border: 1px solid #dedede; border-radius: 14px; padding: 18px;
+          background: rgba(255,255,255,.97); border: 1px solid #d6dbe4; border-radius: 16px; padding: 20px; box-shadow: 0 10px 28px rgba(15,23,42,.07);
           margin-bottom: 16px; box-shadow: 0 3px 12px rgba(0,0,0,.04);
         }
         .section-title {
-          display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 17px;
+          display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 18px;
           margin-bottom: 14px; border-bottom: 1px solid #eee; padding-bottom: 10px;
         }
         .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
         .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .field { display: flex; flex-direction: column; gap: 6px; }
-        .field > span, .charge-field > span { font-size: 12px; font-weight: 800; color: #444; }
+        .field > span, .charge-field > span { font-size: 13px; font-weight: 900; color: #263247; }
         input, select, textarea {
-          width: 100%; border: 1px solid #cfcfcf; border-radius: 8px; padding: 11px 12px;
+          width: 100%; border: 1px solid #c5ccd7; border-radius: 10px; padding: 13px 13px; font-size: 15px;
           background: white; color: #111; outline: none;
         }
         input:focus, select:focus, textarea:focus { border-color: #c9a227; box-shadow: 0 0 0 2px rgba(201,162,39,.12); }
         textarea { min-height: 80px; resize: vertical; }
         .rental-box {
-          margin-top: 15px; padding: 15px; border-radius: 12px; background: #111; color: white;
+          margin-top: 15px; padding: 15px; border-radius: 12px; background: #0b1220; color: white;
           border: 2px solid #c9a227;
         }
         .rental-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .rental-head strong { color: #f0d16b; font-size: 18px; }
+        .rental-head strong { color: #f4d77d; font-size: 20px; }
         .rental-price { font-size: 24px; font-weight: 900; }
         .rental-rules { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
         .rental-rule { background: #222; border: 1px solid #444; border-radius: 8px; padding: 9px; font-size: 12px; line-height: 1.4; }
@@ -731,8 +733,18 @@ function TripSheet() {
           padding: 16px 18px; background: #111; color: white; border-radius: 12px;
         }
         .total-box small { color: #d5d5d5; }
-        .total { color: #f0d16b; font-size: 28px; font-weight: 900; }
+        .total { color: #f0d16b; font-size: 30px; font-weight: 900; }
         .action-row { display: flex; flex-wrap: wrap; gap: 9px; }
+
+        .trip-app input::placeholder, .trip-app textarea::placeholder { color:#7b8492; opacity:1; }
+        .trip-app input:disabled { background:#f5f6f8; color:#111827; font-weight:900; }
+        .trip-app select { font-weight:700; }
+        .trip-app .section-title svg { color:#b58a16; }
+        .trip-app .card:hover { border-color:#d4af37; }
+        .trip-app .btn { box-shadow:0 2px 7px rgba(15,23,42,.06); }
+        .trip-app .btn.gold { box-shadow:0 4px 12px rgba(201,162,39,.25); }
+        .trip-app .rental-box { box-shadow:0 8px 20px rgba(7,16,31,.15); }
+
         .history-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
         .history-tools { display: flex; gap: 8px; flex-wrap: wrap; }
         .searchbox { position: relative; }
@@ -1075,9 +1087,9 @@ function TripSheet() {
           <div className="grid">
             <Field
               label="Trip No"
-              value={trip.tripNo}
-              placeholder="Auto generated on Save"
-              onChange={(v) => update("tripNo", v)}
+              value={trip.tripNo || generateTripNo()}
+              onChange={() => {}}
+              disabled
             />
             <Field
               label="Date"
@@ -1465,7 +1477,7 @@ function TripSheet() {
             </div>
             <div className="p-title">
               <h2>TRIP SHEET</h2>
-              <div><b>Trip No:</b> {trip.tripNo || "DRAFT"}</div>
+              <div><b>Trip No:</b> {trip.tripNo || generateTripNo()}</div>
               <div><b>Date:</b> {formatDate(trip.date)}</div>
             </div>
           </div>
