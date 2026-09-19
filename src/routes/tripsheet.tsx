@@ -457,6 +457,250 @@ function TripSheet() {
     setHistory((prev) => prev.filter((item) => !ids.has(item.id)));
   };
 
+
+  const pdfEscape = (value: string) =>
+    String(value ?? "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\(/g, "\\(")
+      .replace(/\)/g, "\\)");
+
+  const pdfText = (
+    text: string,
+    x: number,
+    y: number,
+    size = 9,
+    font = "F1"
+  ) =>
+    `BT /${font} ${size} Tf 0 g 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${pdfEscape(
+      text
+    )}) Tj ET`;
+
+  const pdfBold = (text: string, x: number, y: number, size = 9) =>
+    pdfText(text, x, y, size, "F2");
+
+  const pdfRect = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    fillGray?: number,
+    strokeGray = 0.75,
+    lineWidth = 0.7
+  ) => {
+    const fill = fillGray == null ? "" : `${fillGray} g `;
+    return `${fill}${strokeGray} G ${lineWidth} w ${x} ${y} ${w} ${h} re ${
+      fillGray == null ? "S" : "B"
+    }`;
+  };
+
+  const pdfLine = (x1: number, y1: number, x2: number, y2: number) =>
+    `0.72 G 0.7 w ${x1} ${y1} m ${x2} ${y2} l S`;
+
+  const downloadPdf = () => {
+    const pageW = 595.28;
+    const pageH = 841.89;
+    const left = 34;
+    const right = 561;
+    const width = right - left;
+    const lines: string[] = [];
+
+    const add = (cmd: string) => lines.push(cmd);
+
+    // Background/header
+    add("0.07 g 0 785 595.28 56 re f");
+    add("0.78 G 2 w 34 785 m 561 785 l S");
+
+    // Royal R logo
+    add("0.78 G 2.2 w 70 813 25 0 360 arc S");
+    add("0.78 G 1 w 70 813 21 0 360 arc S");
+    add(pdfBold("R", 65.5, 806, 19));
+
+    add(pdfBold("RAJPUTRI", 100, 818, 18));
+    add(pdfBold("TOURS & TRAVELS", 101, 803, 8));
+    add(pdfText("Safe Journey - Happy Memories", 101, 791, 7));
+
+    add(pdfBold("TRIP SHEET", 450, 818, 15));
+    add(pdfText(`Trip No: ${trip.tripNo || "DRAFT"}`, 450, 803, 8));
+    add(pdfText(`Date: ${formatDate(trip.date)}`, 450, 791, 8));
+
+    let y = 762;
+
+    // Customer + Route
+    add(pdfRect(left, y - 92, 254, 92));
+    add(pdfRect(307, y - 92, 254, 92));
+    add(pdfBold("CUSTOMER DETAILS", left + 10, y - 15, 8));
+    add(pdfLine(left + 10, y - 20, left + 244, y - 20));
+    add(pdfBold("Name", left + 10, y - 36, 7));
+    add(pdfText(trip.customerName || "-", left + 75, y - 36, 8));
+    add(pdfBold("Mobile", left + 10, y - 51, 7));
+    add(pdfText(trip.customerMobile || "-", left + 75, y - 51, 8));
+    add(pdfBold("Trip Type", left + 10, y - 66, 7));
+    add(pdfText(trip.tripType, left + 75, y - 66, 8));
+    add(pdfBold("Reporting", left + 10, y - 81, 7));
+    add(pdfText(trip.reportingTime || "-", left + 75, y - 81, 8));
+
+    add(pdfBold("ROUTE DETAILS", 317, y - 15, 8));
+    add(pdfLine(317, y - 20, 551, y - 20));
+    add(pdfBold("Pickup", 317, y - 36, 7));
+    add(pdfText(trip.pickup || "-", 382, y - 36, 8));
+    add(pdfBold("Drop", 317, y - 51, 7));
+    add(pdfText(trip.drop || "-", 382, y - 51, 8));
+    if (trip.tripType === "Full Day Rental") {
+      add(pdfBold("End Date", 317, y - 66, 7));
+      add(pdfText(formatDate(trip.endDate), 382, y - 66, 8));
+      add(pdfBold("Release", 317, y - 81, 7));
+      add(pdfText(trip.releaseTime || "-", 382, y - 81, 8));
+    }
+
+    y -= 103;
+
+    // Vehicle
+    add(pdfRect(left, y - 64, width, 64));
+    add(pdfBold("VEHICLE & DRIVER DETAILS", left + 10, y - 15, 8));
+    add(pdfLine(left + 10, y - 20, right - 10, y - 20));
+    add(pdfBold("Vehicle No", left + 10, y - 36, 7));
+    add(pdfText(trip.vehicleNo || "-", left + 78, y - 36, 8));
+    add(pdfBold("Vehicle", left + 180, y - 36, 7));
+    add(pdfText(trip.vehicle || "-", left + 230, y - 36, 8));
+    add(pdfBold("Driver", left + 350, y - 36, 7));
+    add(pdfText(trip.driver || "-", left + 390, y - 36, 8));
+    add(pdfBold("Driver Mobile", left + 10, y - 51, 7));
+    add(pdfText(trip.driverMobile || "-", left + 78, y - 51, 8));
+    add(pdfBold("Distance", left + 180, y - 51, 7));
+    add(pdfText(`${totalKm} KM`, left + 230, y - 51, 8));
+    if (trip.tripType === "Full Day Rental") {
+      add(pdfBold("Rental Days", left + 350, y - 51, 7));
+      add(pdfText(String(rentalDays), left + 410, y - 51, 8));
+    }
+
+    y -= 75;
+
+    // Rental terms
+    if (trip.tripType === "Full Day Rental") {
+      add(pdfRect(left, y - 70, width, 70, 0.96, 0.35, 1));
+      add(pdfBold(`FULL DAY RENTAL - INR ${DAILY_RENTAL.toLocaleString("en-IN")} / DAY`, left + 10, y - 15, 9));
+      add(pdfText(`One Day Rental = 12 Hours or 200 KM. Fixed package charge.`, left + 10, y - 30, 7.5));
+      add(pdfText(`After 200 KM, up to 20 additional KM is free. Beyond 220 KM, next day rental applies.`, left + 10, y - 43, 7.5));
+      add(pdfText(`Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.`, left + 10, y - 56, 7.5));
+      add(pdfBold(`Rental: ${rentalDays} day(s) x INR 2,000 = INR ${rentalAmount.toLocaleString("en-IN")}`, left + 10, y - 66, 8));
+      y -= 80;
+    }
+
+    // Charges
+    add(pdfBold("CHARGES", left, y, 9));
+    y -= 10;
+    add(pdfRect(left, y - 155, width, 155));
+    add(pdfRect(left, y - 25, width, 25, 0.94, 0.75, 0.5));
+    add(pdfBold("DESCRIPTION", left + 10, y - 16, 7.5));
+    add(pdfBold("AMOUNT", right - 65, y - 16, 7.5));
+
+    let rowY = y - 40;
+    const rows: [string, string][] =
+      trip.tripType === "Full Day Rental"
+        ? [
+            [`Daily Rental (${rentalDays} day x INR 2,000)`, money(rentalAmount).replace("₹", "INR ")],
+            ["Toll", money(toll).replace("₹", "INR ")],
+            ["Parking", money(parking).replace("₹", "INR ")],
+            ["Permit", money(permit).replace("₹", "INR ")],
+            ["Driver Bata", money(driverBata).replace("₹", "INR ")],
+            ["Other", money(other).replace("₹", "INR ")],
+          ]
+        : [
+            ["Vehicle Charge", money(regularVehicleCharge).replace("₹", "INR ")],
+            ["Toll", money(toll).replace("₹", "INR ")],
+            ["Parking", money(parking).replace("₹", "INR ")],
+            ["Permit", money(permit).replace("₹", "INR ")],
+            ["Driver Bata", money(driverBata).replace("₹", "INR ")],
+            ["Other", money(other).replace("₹", "INR ")],
+          ];
+
+    rows.forEach(([label, amount]) => {
+      add(pdfText(label, left + 10, rowY, 7.5));
+      add(pdfText(amount, right - 65, rowY, 7.5));
+      rowY -= 18;
+    });
+
+    y -= 168;
+
+    // Grand total
+    add(pdfRect(left, y - 38, width, 38, 0.10, 0.10, 1.2));
+    add("1 g");
+    add(pdfBold("GRAND TOTAL - CUSTOMER PAYABLE", left + 12, y - 16, 9));
+    add(pdfBold(`INR ${grandTotal.toLocaleString("en-IN")}`, right - 115, y - 18, 14));
+    add("0 g");
+    y -= 49;
+
+    // Notes + seal
+    add(pdfRect(left, y - 54, 390, 54));
+    add(pdfBold("NOTES", left + 10, y - 14, 7.5));
+    const note =
+      trip.notes || "Thank you for travelling with Rajputri Tours & Travels.";
+    const noteText = note.length > 120 ? `${note.slice(0, 117)}...` : note;
+    add(pdfText(noteText, left + 10, y - 29, 7.5));
+    add(pdfText("Digitally Generated Trip Sheet", left + 10, y - 43, 7));
+
+    // Simple seal
+    const sx = 505;
+    const sy = y - 26;
+    add(`0.15 G 1.5 w ${sx} ${sy} 25 0 360 arc S`);
+    add(`0.78 G 0.9 w ${sx} ${sy} 20 0 360 arc S`);
+    add(pdfBold("R", sx - 5, sy + 3, 13));
+    add(pdfText("OFFICIAL", sx - 16, sy - 10, 5.5));
+    add(pdfText("DIGITAL", sx - 13, sy - 18, 5.5));
+
+    y -= 66;
+    add(pdfLine(left, y, right, y));
+    add(pdfText("Phone: 8489999568 | Website: www.rajputritravels.com | Blog: blog.rajputritravels.com", left, y - 13, 7));
+    add(pdfText("RAJPUTRI TOURS & TRAVELS", left, y - 26, 6.5));
+    add(pdfText("Safe - Comfortable - On-Time Travel", right - 150, y - 26, 6.5));
+
+    const content = lines.join("\n") + "\n";
+    const objects: string[] = [];
+    const addObj = (body: string) => {
+      objects.push(body);
+      return objects.length;
+    };
+
+    const catalog = addObj("<< /Type /Catalog /Pages 2 0 R >>");
+    const pages = addObj("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+    const page = addObj(
+      "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>"
+    );
+    const stream = addObj(
+      `<< /Length ${content.length} >>\nstream\n${content}endstream`
+    );
+    const font1 = addObj(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
+    );
+    const font2 = addObj(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
+    );
+
+    let pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+    const offsets: number[] = [0];
+    for (let i = 0; i < objects.length; i++) {
+      offsets.push(pdf.length);
+      pdf += `${i + 1} 0 obj\n${objects[i]}\nendobj\n`;
+    }
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n`;
+    pdf += "0000000000 65535 f \n";
+    for (let i = 1; i <= objects.length; i++) {
+      pdf += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
+    }
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+
+    const blob = new Blob([pdf], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${trip.tripNo || "Trip-Sheet"}-${trip.date || "trip"}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const whatsapp = () => {
     if (!trip.customerMobile.trim()) {
       window.alert("Customer Mobile Number உள்ளிடவும்.");
@@ -708,8 +952,8 @@ function TripSheet() {
           <button className="btn gold" onClick={saveTrip}>
             <CheckCircle2 size={16} /> Save
           </button>
-          <button className="btn" onClick={() => window.print()}>
-            <Printer size={16} /> PDF / Print
+          <button className="btn" onClick={downloadPdf}>
+            <Printer size={16} /> Download PDF
           </button>
           <button className="btn green" onClick={whatsapp}>
             <MessageCircle size={16} /> WhatsApp
@@ -993,8 +1237,11 @@ function TripSheet() {
           <button className="btn gold" onClick={saveTrip}>
             <CheckCircle2 size={17} /> Save Trip
           </button>
+          <button className="btn" onClick={downloadPdf}>
+            <Printer size={17} /> Download PDF
+          </button>
           <button className="btn" onClick={() => window.print()}>
-            <Printer size={17} /> Create PDF
+            <Printer size={17} /> Print
           </button>
           <button className="btn green" onClick={whatsapp}>
             <MessageCircle size={17} /> Send WhatsApp
