@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 export const Route = createFileRoute("/tripsheet")({
   component: TripSheetPage,
@@ -31,34 +31,13 @@ type Trip = {
   createdAt: string;
 };
 
-const STORAGE_KEY = "rajputri_trip_history_v1";
+const STORAGE_KEY = "rajputri_trip_history_v2";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const money = (value: string) => {
-  const n = Number(value || 0);
-  return Number.isFinite(n) ? n : 0;
-};
-
-const formatINR = (n: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(n);
-
-const makeTripNo = () => {
-  const d = new Date();
-  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(
-    d.getDate(),
-  ).padStart(2, "0")}`;
-  const suffix = String(Date.now()).slice(-4);
-  return `RT-${stamp}-${suffix}`;
-};
-
-const blankTrip = (): Trip => ({
+const newTrip = (): Trip => ({
   id: crypto.randomUUID(),
-  tripNo: makeTripNo(),
+  tripNo: `RT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
   date: today(),
   customerName: "",
   customerMobile: "",
@@ -82,12 +61,32 @@ const blankTrip = (): Trip => ({
   createdAt: new Date().toISOString(),
 });
 
+const num = (v: string) => {
+  const n = Number(v || 0);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const inr = (n: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+const totalAmount = (t: Trip) =>
+  num(t.vehicleCharge) +
+  num(t.toll) +
+  num(t.parking) +
+  num(t.permit) +
+  num(t.driverBata) +
+  num(t.other);
+
 function TripSheetPage() {
-  const [trip, setTrip] = useState<Trip>(blankTrip);
+  const [trip, setTrip] = useState<Trip>(newTrip());
   const [history, setHistory] = useState<Trip[]>([]);
-  const [month, setMonth] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [search, setSearch] = useState("");
-  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     try {
@@ -101,20 +100,10 @@ function TripSheetPage() {
   const update = (key: keyof Trip, value: string) =>
     setTrip((old) => ({ ...old, [key]: value }));
 
-  const totalKm = Math.max(
-    0,
-    money(trip.closeKm) - money(trip.startKm),
-  );
+  const totalKm = Math.max(0, num(trip.closeKm) - num(trip.startKm));
+  const total = totalAmount(trip);
 
-  const grandTotal =
-    money(trip.vehicleCharge) +
-    money(trip.toll) +
-    money(trip.parking) +
-    money(trip.permit) +
-    money(trip.driverBata) +
-    money(trip.other);
-
-  const saveHistory = (item: Trip) => {
+  const save = (item = trip) => {
     const next = [item, ...history.filter((x) => x.id !== item.id)];
     setHistory(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -122,22 +111,73 @@ function TripSheetPage() {
 
   const saveTrip = () => {
     if (!trip.customerName.trim()) {
-      setMessage("Customer Name உள்ளிடவும்.");
+      setNotice("Customer Name உள்ளிடவும்.");
       return;
     }
-    saveHistory(trip);
-    setMessage("Trip Sheet History-ல் சேமிக்கப்பட்டது.");
-    setTimeout(() => setMessage(""), 2500);
+    save();
+    setNotice("Trip Sheet History-ல் சேமிக்கப்பட்டது.");
+    window.setTimeout(() => setNotice(""), 2500);
   };
 
-  const newTrip = () => {
-    setTrip(blankTrip());
-    setMessage("");
+  const printPdf = () => {
+    save();
+    window.setTimeout(() => window.print(), 150);
   };
 
-  const loadTrip = (item: Trip) => {
+  const shareWhatsApp = () => {
+    save();
+    const phone = trip.customerMobile.replace(/\D/g, "");
+    const text = [
+      "Dear Customer,",
+      "",
+      "Please find attached your official RAJPUTRI TRAVELS Trip Sheet.",
+      `Trip No: ${trip.tripNo}`,
+      `Date: ${trip.date}`,
+      `Customer: ${trip.customerName || "-"}`,
+      "",
+      "Thank you for travelling with us.",
+      "RAJPUTRI TRAVELS",
+      "Safe · Comfortable · On-Time Travel",
+    ].join("\n");
+
+    window.open(
+      `https://wa.me/${phone.startsWith("91") ? phone : `91${phone}`}?text=${encodeURIComponent(text)}`,
+      "_blank",
+    );
+  };
+
+  const months = useMemo(() => {
+    return Array.from(
+      new Set(history.map((x) => x.date.slice(0, 7)).filter(Boolean)),
+    ).sort().reverse();
+  }, [history]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return history.filter((x) => {
+      const monthOk =
+        selectedMonth === "all" || x.date.startsWith(selectedMonth);
+
+      const haystack = [
+        x.tripNo,
+        x.customerName,
+        x.customerMobile,
+        x.pickup,
+        x.drop,
+        x.vehicleNo,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return monthOk && (!q || haystack.includes(q));
+    });
+  }, [history, selectedMonth, search]);
+
+  const filteredTotal = filtered.reduce((sum, x) => sum + totalAmount(x), 0);
+
+  const openTrip = (item: Trip) => {
     setTrip(item);
-    setMessage("Trip Sheet loaded.");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -153,99 +193,37 @@ function TripSheetPage() {
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  const months = useMemo(() => {
-    const set = new Set(
-      history.map((x) => x.date.slice(0, 7)).filter(Boolean),
-    );
-    return Array.from(set).sort().reverse();
-  }, [history]);
-
-  const filteredHistory = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return history.filter((x) => {
-      const monthOk = month === "all" || x.date.startsWith(month);
-      const text = [
-        x.tripNo,
-        x.customerName,
-        x.customerMobile,
-        x.pickup,
-        x.drop,
-        x.vehicleNo,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return monthOk && (!q || text.includes(q));
-    });
-  }, [history, month, search]);
-
-  const monthTotal = useMemo(
-    () =>
-      filteredHistory.reduce(
-        (sum, x) =>
-          sum +
-          money(x.vehicleCharge) +
-          money(x.toll) +
-          money(x.parking) +
-          money(x.permit) +
-          money(x.driverBata) +
-          money(x.other),
-        0,
-      ),
-    [filteredHistory],
-  );
-
-  const printPdf = () => {
-    saveHistory(trip);
-    setTimeout(() => window.print(), 100);
-  };
-
-  const whatsapp = () => {
-    saveHistory(trip);
-    const text = [
-      "Dear Customer,",
-      "",
-      "Please find attached your official RAJPUTRI TRAVELS Trip Sheet.",
-      `Trip No: ${trip.tripNo}`,
-      `Date: ${trip.date}`,
-      `Customer: ${trip.customerName || "-"}`,
-      "",
-      "Thank you for travelling with us.",
-      "RAJPUTRI TRAVELS",
-      "Safe · Comfortable · On-Time Travel",
-    ].join("\n");
-    window.open(
-      `https://wa.me/91${trip.customerMobile.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`,
-      "_blank",
-    );
-  };
-
   return (
     <>
       <div className="ts-app">
-        <div className="ts-topbar">
-          <div>
-            <div className="ts-brand">ILAVARASI</div>
-            <div className="ts-brand-sub">RAJPUTRI TRAVELS</div>
+        <header className="app-header">
+          <div className="app-brand">
+            <MiniLogo />
+            <div>
+              <div className="app-brand-main">RAJPUTRI</div>
+              <div className="app-brand-sub">TOURS &amp; TRAVELS</div>
+            </div>
           </div>
-          <div className="ts-actions">
-            <button onClick={newTrip}>＋ New</button>
-            <button onClick={saveTrip}>Save</button>
-            <button onClick={printPdf}>PDF / Print</button>
-            <button onClick={whatsapp}>WhatsApp</button>
+
+          <div className="app-buttons">
+            <button onClick={() => setTrip(newTrip())}>＋ NEW TRIP</button>
+            <button onClick={saveTrip}>SAVE</button>
+            <button onClick={printPdf}>PDF / PRINT</button>
+            <button onClick={shareWhatsApp}>WHATSAPP</button>
           </div>
-        </div>
+        </header>
 
-        <div className="ts-message">{message}</div>
+        <div className="notice">{notice}</div>
 
-        <div className="ts-layout">
+        <div className="workspace">
           <main>
-            <section className="ts-card">
-              <div className="ts-card-title">Trip Details</div>
-              <div className="ts-grid">
+            <section className="form-card">
+              <CardTitle title="Trip Details" />
+              <div className="form-grid">
                 <Field label="Trip No">
                   <input value={trip.tripNo} onChange={(e) => update("tripNo", e.target.value)} />
                 </Field>
-                <Field label="Date" type="date">
+                <Field label="Date">
                   <input type="date" value={trip.date} onChange={(e) => update("date", e.target.value)} />
                 </Field>
                 <Field label="Customer Name">
@@ -276,9 +254,9 @@ function TripSheetPage() {
               </div>
             </section>
 
-            <section className="ts-card">
-              <div className="ts-card-title">Vehicle & Driver</div>
-              <div className="ts-grid">
+            <section className="form-card">
+              <CardTitle title="Vehicle & Driver Details" />
+              <div className="form-grid">
                 <Field label="Vehicle No">
                   <input value={trip.vehicleNo} onChange={(e) => update("vehicleNo", e.target.value)} />
                 </Field>
@@ -298,90 +276,79 @@ function TripSheetPage() {
                   <input inputMode="numeric" value={trip.closeKm} onChange={(e) => update("closeKm", e.target.value)} />
                 </Field>
               </div>
-              <div className="ts-km">Total KM: <b>{totalKm.toLocaleString("en-IN")} KM</b></div>
-            </section>
 
-            <section className="ts-card">
-              <div className="ts-card-title">Charges</div>
-              <div className="ts-charge-grid">
-                {[
-                  ["vehicleCharge", "Vehicle Charge"],
-                  ["toll", "Toll"],
-                  ["parking", "Parking"],
-                  ["permit", "Permit"],
-                  ["driverBata", "Driver Bata"],
-                  ["other", "Other Charges"],
-                ].map(([key, label]) => (
-                  <Field key={key} label={label}>
-                    <input
-                      inputMode="decimal"
-                      value={trip[key as keyof Trip] as string}
-                      onChange={(e) => update(key as keyof Trip, e.target.value)}
-                      placeholder="₹ 0"
-                    />
-                  </Field>
-                ))}
+              <div className="km-box">
+                TOTAL DISTANCE: <strong>{totalKm.toLocaleString("en-IN")} KM</strong>
               </div>
-              <div className="ts-total">GRAND TOTAL <strong>{formatINR(grandTotal)}</strong></div>
             </section>
 
-            <section className="ts-card">
-              <div className="ts-card-title">Notes</div>
+            <section className="form-card">
+              <CardTitle title="Charge Details" />
+              <div className="charge-grid">
+                <AmountField label="Vehicle Charge" value={trip.vehicleCharge} onChange={(v) => update("vehicleCharge", v)} />
+                <AmountField label="Toll" value={trip.toll} onChange={(v) => update("toll", v)} />
+                <AmountField label="Parking" value={trip.parking} onChange={(v) => update("parking", v)} />
+                <AmountField label="Permit" value={trip.permit} onChange={(v) => update("permit", v)} />
+                <AmountField label="Driver Bata" value={trip.driverBata} onChange={(v) => update("driverBata", v)} />
+                <AmountField label="Other Charges" value={trip.other} onChange={(v) => update("other", v)} />
+              </div>
+
+              <div className="grand-total">
+                <span>GRAND TOTAL</span>
+                <strong>{inr(total)}</strong>
+              </div>
+            </section>
+
+            <section className="form-card">
+              <CardTitle title="Notes" />
               <textarea rows={3} value={trip.notes} onChange={(e) => update("notes", e.target.value)} />
             </section>
           </main>
 
-          <aside className="ts-history">
-            <div className="ts-history-head">
+          <aside className="history-card">
+            <div className="history-heading">
               <div>
-                <div className="ts-card-title">Monthly Trip History</div>
-                <div className="ts-count">{history.length} saved trip(s)</div>
+                <div className="history-title">MONTHLY TRIP HISTORY</div>
+                <div className="history-count">{history.length} saved trip(s)</div>
               </div>
-              <button className="danger" onClick={clearHistory}>Clear All</button>
+              <button className="clear-btn" onClick={clearHistory}>CLEAR</button>
             </div>
 
-            <div className="ts-filter">
-              <select value={month} onChange={(e) => setMonth(e.target.value)}>
-                <option value="all">All Months</option>
-                {months.map((m) => (
-                  <option key={m} value={m}>{monthLabel(m)}</option>
-                ))}
-              </select>
-              <input
-                placeholder="Search customer / trip no"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+              <option value="all">All Months</option>
+              {months.map((m) => (
+                <option value={m} key={m}>{monthName(m)}</option>
+              ))}
+            </select>
+
+            <input
+              className="history-search"
+              placeholder="Search customer / trip no"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+
+            <div className="history-summary">
+              <span>Trips <b>{filtered.length}</b></span>
+              <span>Total <b>{inr(filteredTotal)}</b></span>
             </div>
 
-            <div className="ts-history-summary">
-              <span>Filtered Trips <b>{filteredHistory.length}</b></span>
-              <span>Total <b>{formatINR(monthTotal)}</b></span>
-            </div>
-
-            <div className="ts-history-list">
-              {filteredHistory.length === 0 ? (
-                <div className="empty">No trip history yet.</div>
+            <div className="history-list">
+              {filtered.length === 0 ? (
+                <div className="empty-history">No trip history yet.</div>
               ) : (
-                filteredHistory.map((item) => (
+                filtered.map((item) => (
                   <div className="history-item" key={item.id}>
-                    <div className="history-main">
+                    <div>
                       <b>{item.tripNo}</b>
-                      <span>{item.date}</span>
                       <strong>{item.customerName || "Customer"}</strong>
+                      <span>{item.date}</span>
                       <span>{item.pickup || "-"} → {item.drop || "-"}</span>
                     </div>
-                    <div className="history-right">
-                      <b>{formatINR(
-                        money(item.vehicleCharge) +
-                        money(item.toll) +
-                        money(item.parking) +
-                        money(item.permit) +
-                        money(item.driverBata) +
-                        money(item.other)
-                      )}</b>
-                      <button onClick={() => loadTrip(item)}>Open</button>
-                      <button className="danger" onClick={() => deleteTrip(item.id)}>Delete</button>
+                    <div className="history-actions">
+                      <strong>{inr(totalAmount(item))}</strong>
+                      <button onClick={() => openTrip(item)}>OPEN</button>
+                      <button className="delete-btn" onClick={() => deleteTrip(item.id)}>DELETE</button>
                     </div>
                   </div>
                 ))
@@ -391,107 +358,493 @@ function TripSheetPage() {
         </div>
       </div>
 
-      <div className="print-only">
-        <PrintableTripSheet trip={trip} totalKm={totalKm} grandTotal={grandTotal} />
+      <div className="print-area">
+        <PrintableTripSheet trip={trip} totalKm={totalKm} total={total} />
       </div>
 
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; background: #f5f3ef; color: #24201b; font-family: Arial, Helvetica, sans-serif; }
-        button, input, select, textarea { font: inherit; }
-        button { cursor: pointer; border: 0; }
-        .ts-app { min-height: 100vh; }
-        .ts-topbar { position: sticky; top: 0; z-index: 20; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 22px; background:#21130d; color:white; box-shadow:0 3px 15px #0002; }
-        .ts-brand { font-family: Georgia, serif; letter-spacing:3px; font-size:24px; color:#e8bd68; font-weight:700; }
-        .ts-brand-sub { font-size:11px; letter-spacing:3px; margin-top:2px; color:#fff; }
-        .ts-actions { display:flex; flex-wrap:wrap; gap:8px; }
-        .ts-actions button { background:#e7bd69; color:#24160e; padding:9px 13px; border-radius:7px; font-weight:700; }
-        .ts-message { min-height:25px; text-align:center; color:#276749; font-weight:700; padding:4px 12px; }
-        .ts-layout { max-width:1400px; margin:auto; padding:18px; display:grid; grid-template-columns:minmax(0, 1.45fr) minmax(330px,.8fr); gap:18px; }
-        .ts-card, .ts-history { background:white; border:1px solid #ded8cf; border-radius:12px; box-shadow:0 5px 18px #0000000b; margin-bottom:16px; }
-        .ts-card { padding:18px; }
-        .ts-card-title { font-size:16px; font-weight:800; color:#6d4817; margin-bottom:13px; }
-        .ts-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-        .ts-charge-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-        label { display:block; font-size:12px; color:#6b6259; font-weight:700; margin-bottom:6px; }
-        input, select, textarea { width:100%; border:1px solid #d8d0c5; border-radius:7px; padding:10px; outline:none; background:#fff; }
-        input:focus, select:focus, textarea:focus { border-color:#b8842d; box-shadow:0 0 0 2px #b8842d22; }
-        textarea { resize:vertical; }
-        .ts-km { margin-top:14px; background:#f7f1e7; border-radius:7px; padding:10px 12px; color:#5e4a34; }
-        .ts-total { margin-top:15px; padding:14px; border-radius:8px; background:#21130d; color:#fff; display:flex; justify-content:space-between; align-items:center; }
-        .ts-total strong { color:#e8bd68; font-size:20px; }
-        .ts-history { padding:16px; position:sticky; top:85px; height:fit-content; max-height:calc(100vh - 105px); overflow:hidden; }
-        .ts-history-head { display:flex; justify-content:space-between; gap:8px; align-items:start; }
-        .ts-count { font-size:12px; color:#777; }
-        .danger { color:#a22a24 !important; background:#fff0ef !important; padding:7px 9px; border-radius:6px; }
-        .ts-filter { display:grid; gap:8px; margin:12px 0; }
-        .ts-history-summary { display:flex; justify-content:space-between; background:#f7f1e7; padding:9px; border-radius:7px; font-size:12px; }
-        .ts-history-list { overflow:auto; max-height:calc(100vh - 300px); margin-top:10px; }
-        .history-item { border:1px solid #e6e0d8; border-radius:8px; padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; gap:8px; }
-        .history-main { display:grid; gap:3px; font-size:12px; min-width:0; }
-        .history-main b { color:#76501c; }
-        .history-main strong { font-size:14px; }
-        .history-right { display:flex; flex-direction:column; align-items:end; gap:5px; }
-        .history-right b { color:#333; }
-        .history-right button { padding:5px 7px; border-radius:5px; background:#f2eee8; font-size:11px; }
-        .empty { text-align:center; padding:35px 10px; color:#888; }
-        .print-only { display:none; }
 
-        @media(max-width:900px) {
-          .ts-layout { grid-template-columns:1fr; padding:10px; }
-          .ts-history { position:static; max-height:none; }
-          .ts-history-list { max-height:500px; }
-          .ts-charge-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-          .ts-topbar { align-items:flex-start; flex-direction:column; }
+        body {
+          margin: 0;
+          background: #f3f1ee;
+          color: #201b17;
+          font-family: Arial, Helvetica, sans-serif;
         }
-        @media(max-width:560px) {
-          .ts-grid, .ts-charge-grid { grid-template-columns:1fr; }
-          .ts-actions button { flex:1; }
+
+        button, input, select, textarea { font: inherit; }
+
+        button {
+          cursor: pointer;
+          border: 0;
+        }
+
+        .ts-app { min-height: 100vh; }
+
+        .app-header {
+          position: sticky;
+          top: 0;
+          z-index: 30;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 20px;
+          padding: 14px 22px;
+          background: #120e0c;
+          color: white;
+          box-shadow: 0 4px 20px #0004;
+        }
+
+        .app-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .app-brand-main {
+          font-family: Georgia, serif;
+          color: #e5b95f;
+          font-size: 27px;
+          font-weight: 900;
+          letter-spacing: 3px;
+        }
+
+        .app-brand-sub {
+          color: white;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 3px;
+        }
+
+        .app-buttons {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .app-buttons button {
+          padding: 10px 13px;
+          border-radius: 7px;
+          background: #d8ad56;
+          color: #1b120c;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .notice {
+          min-height: 30px;
+          padding: 6px;
+          text-align: center;
+          color: #216b42;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .workspace {
+          width: min(1450px, 100%);
+          margin: auto;
+          padding: 16px;
+          display: grid;
+          grid-template-columns: minmax(0, 1.45fr) minmax(350px, .75fr);
+          gap: 18px;
+        }
+
+        .form-card, .history-card {
+          background: white;
+          border: 1px solid #ddd6ce;
+          border-radius: 12px;
+          box-shadow: 0 5px 20px #0000000c;
+          margin-bottom: 16px;
+        }
+
+        .form-card { padding: 20px; }
+
+        .card-title {
+          margin-bottom: 16px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #ead8b5;
+          color: #734c18;
+          font-size: 19px;
+          font-weight: 900;
+          letter-spacing: .3px;
+        }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 15px;
+        }
+
+        label {
+          display: block;
+          margin-bottom: 7px;
+          color: #625a52;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        input, select, textarea {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid #cec6bc;
+          border-radius: 7px;
+          background: white;
+          color: #211c18;
+          font-size: 16px;
+          outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+          border-color: #a67528;
+          box-shadow: 0 0 0 3px #a6752820;
+        }
+
+        .km-box {
+          margin-top: 15px;
+          padding: 12px 14px;
+          background: #f7f0e3;
+          border-radius: 7px;
+          color: #60451f;
+          font-size: 15px;
+          font-weight: 800;
+        }
+
+        .km-box strong {
+          font-size: 18px;
+        }
+
+        .charge-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 15px;
+        }
+
+        .grand-total {
+          margin-top: 17px;
+          padding: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-radius: 8px;
+          background: #17110e;
+          color: white;
+          font-size: 17px;
+          font-weight: 900;
+        }
+
+        .grand-total strong {
+          color: #e7bd69;
+          font-size: 24px;
+        }
+
+        .history-card {
+          position: sticky;
+          top: 88px;
+          height: fit-content;
+          max-height: calc(100vh - 105px);
+          overflow: hidden;
+          padding: 18px;
+        }
+
+        .history-heading {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 8px;
+          margin-bottom: 13px;
+        }
+
+        .history-title {
+          color: #734c18;
+          font-size: 18px;
+          font-weight: 900;
+        }
+
+        .history-count {
+          margin-top: 4px;
+          color: #777;
+          font-size: 12px;
+        }
+
+        .clear-btn, .delete-btn {
+          color: #9b2d27;
+          background: #fff0ee;
+          padding: 7px 9px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .history-search { margin-top: 9px; }
+
+        .history-summary {
+          margin: 12px 0;
+          padding: 11px;
+          display: flex;
+          justify-content: space-between;
+          border-radius: 7px;
+          background: #f6efe3;
+          font-size: 13px;
+        }
+
+        .history-list {
+          overflow-y: auto;
+          max-height: calc(100vh - 305px);
+        }
+
+        .history-item {
+          padding: 11px;
+          margin-bottom: 8px;
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          border: 1px solid #e3ddd5;
+          border-radius: 8px;
+        }
+
+        .history-item > div:first-child {
+          min-width: 0;
+          display: grid;
+          gap: 4px;
+          font-size: 12px;
+        }
+
+        .history-item > div:first-child b {
+          color: #80591e;
+        }
+
+        .history-item > div:first-child strong {
+          font-size: 15px;
+        }
+
+        .history-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 5px;
+        }
+
+        .history-actions > strong { font-size: 13px; }
+
+        .history-actions button {
+          padding: 5px 7px;
+          border-radius: 5px;
+          background: #f0ece6;
+          font-size: 10px;
+          font-weight: 800;
+        }
+
+        .empty-history {
+          padding: 35px 10px;
+          text-align: center;
+          color: #888;
+        }
+
+        .print-area { display: none; }
+
+        @media(max-width: 950px) {
+          .workspace { grid-template-columns: 1fr; }
+          .history-card {
+            position: static;
+            max-height: none;
+          }
+          .history-list { max-height: 500px; }
+        }
+
+        @media(max-width: 650px) {
+          .app-header {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+          .form-grid, .charge-grid { grid-template-columns: 1fr; }
+          .workspace { padding: 9px; }
+          .form-card { padding: 15px; }
         }
 
         @media print {
-          @page { size:A4 portrait; margin:0; }
-          html, body { width:210mm; height:297mm; margin:0 !important; padding:0 !important; background:#fff !important; }
-          body * { visibility:hidden !important; }
-          .ts-app { display:none !important; }
-          .print-only, .print-only * { visibility:visible !important; }
-          .print-only { display:block !important; width:210mm; height:297mm; overflow:hidden; }
-          .print-sheet { width:210mm; height:297mm; max-height:297mm; overflow:hidden; page-break-after:avoid; break-after:avoid; padding:10mm 11mm 8mm; background:#fff; color:#1e1a16; font-family:Arial,Helvetica,sans-serif; }
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+
+          html, body {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          .ts-app {
+            display: none !important;
+          }
+
+          .print-area,
+          .print-area * {
+            visibility: visible !important;
+          }
+
+          .print-area {
+            display: block !important;
+            width: 210mm;
+            height: 297mm;
+            overflow: hidden;
+          }
+
+          .print-sheet {
+            width: 210mm;
+            height: 297mm;
+            max-height: 297mm;
+            overflow: hidden;
+            padding: 8mm;
+            background: white;
+            color: #171310;
+            font-family: Arial, Helvetica, sans-serif;
+            page-break-after: avoid;
+            break-after: avoid;
+          }
         }
       `}</style>
     </>
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-  type?: string;
-}) {
-  return <div><label>{label}</label>{children}</div>;
+function CardTitle({ title }: { title: string }) {
+  return <div className="card-title">{title}</div>;
 }
 
-function monthLabel(month: string) {
-  const [y, m] = month.split("-");
-  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-IN", {
-    month: "long",
-    year: "numeric",
-  });
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <label>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function AmountField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Field label={label}>
+      <input
+        inputMode="decimal"
+        placeholder="₹ 0"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </Field>
+  );
+}
+
+function monthName(value: string) {
+  const [year, month] = value.split("-");
+  return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(
+    "en-IN",
+    { month: "long", year: "numeric" },
+  );
+}
+
+function MiniLogo() {
+  return (
+    <svg width="54" height="54" viewBox="0 0 100 100" aria-label="Rajputri logo">
+      <circle cx="50" cy="50" r="46" fill="#111" stroke="#e3b75c" strokeWidth="4" />
+      <path
+        d="M21 45 C29 22 43 16 58 20 C73 24 80 35 79 49 C76 69 62 80 45 80 C31 79 23 67 21 45Z"
+        fill="#21150e"
+        stroke="#e3b75c"
+        strokeWidth="2"
+      />
+      <path
+        d="M30 39 L35 25 L43 32 L50 19 L57 32 L65 25 L70 39 L64 44 L36 44Z"
+        fill="#e3b75c"
+      />
+      <text x="50" y="66" textAnchor="middle" fill="#e3b75c" fontSize="28" fontFamily="Georgia" fontWeight="900">
+        R
+      </text>
+    </svg>
+  );
+}
+
+function PrintLogo() {
+  return (
+    <svg width="76" height="76" viewBox="0 0 100 100" aria-label="Rajputri Tours and Travels logo">
+      <circle cx="50" cy="50" r="47" fill="#111" stroke="#d8aa50" strokeWidth="3" />
+      <circle cx="50" cy="50" r="41" fill="none" stroke="#8f681f" strokeWidth="1" />
+      <path
+        d="M22 42 C27 25 42 17 56 20 C71 23 79 36 77 51 C74 67 63 78 48 80 C34 79 25 67 22 42Z"
+        fill="#19120e"
+        stroke="#d8aa50"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M30 37 L34 23 L42 30 L50 17 L58 30 L66 23 L70 37 L64 42 L36 42Z"
+        fill="#d8aa50"
+      />
+      <text x="50" y="64" textAnchor="middle" fill="#e5b95f" fontSize="29" fontFamily="Georgia" fontWeight="900">
+        R
+      </text>
+      <text x="50" y="88" textAnchor="middle" fill="#e5b95f" fontSize="5.5" fontWeight="800" letterSpacing="1">
+        RAJPUTRI
+      </text>
+    </svg>
+  );
+}
+
+function DigitalSeal() {
+  return (
+    <svg width="82" height="82" viewBox="0 0 100 100" aria-label="Official digital seal">
+      <circle cx="50" cy="50" r="46" fill="white" stroke="#9b7026" strokeWidth="3" />
+      <circle cx="50" cy="50" r="38" fill="none" stroke="#c39a50" strokeWidth="1.5" strokeDasharray="2 3" />
+      <text x="50" y="27" textAnchor="middle" fontSize="6.5" fontWeight="800" fill="#6f4c19">
+        RAJPUTRI
+      </text>
+      <text x="50" y="35" textAnchor="middle" fontSize="5.3" fontWeight="800" fill="#6f4c19">
+        TOURS &amp; TRAVELS
+      </text>
+      <circle cx="50" cy="51" r="12" fill="#17110e" />
+      <text x="50" y="56" textAnchor="middle" fontSize="13" fontWeight="900" fill="#e3b75c">
+        R
+      </text>
+      <text x="50" y="72" textAnchor="middle" fontSize="6.5" fontWeight="900" fill="#6f4c19">
+        ✓ OFFICIAL
+      </text>
+      <text x="50" y="81" textAnchor="middle" fontSize="5" fontWeight="700" fill="#777">
+        DIGITAL TRIP SHEET
+      </text>
+    </svg>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="print-info">
+      <div className="print-label">{label}</div>
+      <div className="print-value">{value || "-"}</div>
+    </div>
+  );
 }
 
 function PrintableTripSheet({
   trip,
   totalKm,
-  grandTotal,
+  total,
 }: {
   trip: Trip;
   totalKm: number;
-  grandTotal: number;
+  total: number;
 }) {
-  const rows = [
+  const charges = [
     ["Vehicle Charge", trip.vehicleCharge],
     ["Toll", trip.toll],
     ["Parking", trip.parking],
@@ -502,24 +855,33 @@ function PrintableTripSheet({
 
   return (
     <div className="print-sheet">
-      <div style={{ border: "1.5px solid #8d641f", height: "100%", padding: "6mm", position: "relative" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #d8c39a", paddingBottom:"4mm" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"4mm" }}>
-            <LogoMark />
+      <div className="print-border">
+        <div className="print-header">
+          <div className="logo-area">
+            <PrintLogo />
             <div>
-              <div style={{ fontFamily:"Georgia,serif", fontSize:"24px", letterSpacing:"3px", fontWeight:800, color:"#9b6c1e" }}>ILAVARASI</div>
-              <div style={{ fontSize:"12px", letterSpacing:"3px", fontWeight:800 }}>RAJPUTRI TRAVELS</div>
-              <div style={{ fontSize:"8px", color:"#777", marginTop:"1mm" }}>Airport Pickup & Drop · Temple Tours · Outstation Taxi</div>
+              <div className="logo-name">RAJPUTRI</div>
+              <div className="logo-sub">TOURS &amp; TRAVELS</div>
+              <div className="logo-tagline">
+                Safe Journey · Happy Memories
+              </div>
             </div>
           </div>
-          <div style={{ textAlign:"right" }}>
-            <div style={{ fontSize:"20px", fontWeight:900, letterSpacing:"1px" }}>TRIP SHEET</div>
-            <div style={{ fontSize:"9px", marginTop:"2mm" }}>Trip No: <b>{trip.tripNo}</b></div>
-            <div style={{ fontSize:"9px" }}>Date: <b>{trip.date}</b></div>
+
+          <div className="trip-title-box">
+            <div className="trip-title">TRIP SHEET</div>
+            <div>Trip No: <b>{trip.tripNo}</b></div>
+            <div>Date: <b>{trip.date}</b></div>
           </div>
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"3mm", marginTop:"4mm" }}>
+        <div className="service-line">
+          Airport Pickup &amp; Drop · Temple Tours · Outstation Taxi
+        </div>
+
+        <div className="print-section-heading">CUSTOMER &amp; TRIP DETAILS</div>
+
+        <div className="info-grid">
           <Info label="Customer Name" value={trip.customerName} />
           <Info label="Customer Mobile" value={trip.customerMobile} />
           <Info label="Trip Type" value={trip.tripType} />
@@ -528,7 +890,9 @@ function PrintableTripSheet({
           <Info label="Drop" value={trip.drop} />
         </div>
 
-        <div style={{ marginTop:"4mm", background:"#f7f1e7", padding:"3mm", display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"3mm", borderRadius:"1mm" }}>
+        <div className="print-section-heading dark">VEHICLE &amp; DRIVER DETAILS</div>
+
+        <div className="info-grid vehicle-grid">
           <Info label="Vehicle No" value={trip.vehicleNo} />
           <Info label="Vehicle" value={trip.vehicle} />
           <Info label="Driver" value={trip.driver} />
@@ -537,76 +901,62 @@ function PrintableTripSheet({
           <Info label="Closing KM" value={trip.closeKm} />
         </div>
 
-        <div style={{ marginTop:"4mm", border:"1px solid #d7d0c6" }}>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 35mm", background:"#21130d", color:"#fff", padding:"2.5mm 3mm", fontWeight:800, fontSize:"9px" }}>
-            <span>CHARGE DESCRIPTION</span><span style={{ textAlign:"right" }}>AMOUNT</span>
-          </div>
-          {rows.map(([name, value]) => (
-            <div key={name} style={{ display:"grid", gridTemplateColumns:"1fr 35mm", padding:"2.2mm 3mm", borderTop:"1px solid #eee8df", fontSize:"9px" }}>
-              <span>{name}</span><span style={{ textAlign:"right" }}>{formatINR(money(value))}</span>
-            </div>
-          ))}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 35mm", padding:"3mm", background:"#f5ead3", borderTop:"1px solid #cdb887", fontSize:"12px", fontWeight:900 }}>
-            <span>GRAND TOTAL</span><span style={{ textAlign:"right" }}>{formatINR(grandTotal)}</span>
-          </div>
+        <div className="distance-strip">
+          <span>TOTAL DISTANCE</span>
+          <b>{totalKm.toLocaleString("en-IN")} KM</b>
         </div>
 
-        <div style={{ marginTop:"3mm", fontSize:"9px", color:"#555" }}>
+        <div className="print-section-heading">CHARGE DETAILS</div>
+
+        <table className="charge-table">
+          <thead>
+            <tr>
+              <th style={{ width: "13%" }}>S.NO</th>
+              <th>DESCRIPTION</th>
+              <th style={{ width: "25%" }}>AMOUNT (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {charges.map(([label, value], index) => (
+              <tr key={label}>
+                <td>{index + 1}</td>
+                <td>{label}</td>
+                <td>{num(value).toLocaleString("en-IN")}</td>
+              </tr>
+            ))}
+            <tr className="total-row">
+              <td colSpan={2}>GRAND TOTAL</td>
+              <td>{inr(total)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="notes-box">
           <b>Notes:</b> {trip.notes || "-"}
         </div>
 
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:"4mm", paddingTop:"3mm", borderTop:"1px solid #d8c39a" }}>
-          <div style={{ fontSize:"8px", lineHeight:1.55 }}>
-            <b>RAJPUTRI TRAVELS</b><br />
-            8489999568 · www.rajputritravels.com<br />
-            blog.rajputritravels.com
+        <div className="bottom-area">
+          <div className="contact-block">
+            <div className="contact-brand">RAJPUTRI TRAVELS</div>
+            <div>8489999568</div>
+            <div>www.rajputritravels.com</div>
+            <div>blog.rajputritravels.com</div>
           </div>
+
           <DigitalSeal />
-          <div style={{ textAlign:"right", fontSize:"8px", lineHeight:1.55 }}>
-            <b>Total Distance</b><br />
-            <span style={{ fontSize:"13px", fontWeight:900 }}>{totalKm.toLocaleString("en-IN")} KM</span><br />
-            <span>Digitally Generated Trip Sheet</span>
+
+          <div className="digital-block">
+            <div className="distance-big">{totalKm.toLocaleString("en-IN")} KM</div>
+            <div className="distance-caption">TOTAL DISTANCE</div>
+            <div className="digital-note">Digitally Generated Trip Sheet</div>
           </div>
         </div>
 
-        <div style={{ position:"absolute", bottom:"3mm", left:"6mm", right:"6mm", textAlign:"center", fontSize:"7px", color:"#777", letterSpacing:".5px" }}>
-          Safe · Comfortable · On-Time Travel
+        <div className="footer-line">
+          <span>RAJPUTRI TOURS &amp; TRAVELS</span>
+          <span>Safe · Comfortable · On-Time Travel</span>
         </div>
       </div>
     </div>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div style={{ fontSize:"7px", textTransform:"uppercase", letterSpacing:".7px", color:"#826f59", fontWeight:800 }}>{label}</div>
-      <div style={{ fontSize:"9.5px", fontWeight:700, marginTop:"1mm", minHeight:"4mm" }}>{value || "-"}</div>
-    </div>
-  );
-}
-
-function LogoMark() {
-  return (
-    <svg width="54" height="54" viewBox="0 0 100 100" aria-label="ILAVARASI logo">
-      <circle cx="50" cy="50" r="47" fill="#21130d" stroke="#c99b4b" strokeWidth="4"/>
-      <path d="M24 36 L31 22 L40 31 L50 17 L60 31 L69 22 L76 36 L70 43 L30 43 Z" fill="#e7bd69"/>
-      <path d="M30 48 Q50 40 70 48 L67 73 Q50 83 33 73 Z" fill="none" stroke="#e7bd69" strokeWidth="3"/>
-      <text x="50" y="64" textAnchor="middle" fill="#fff" fontSize="15" fontFamily="Georgia" fontWeight="700">IL</text>
-    </svg>
-  );
-}
-
-function DigitalSeal() {
-  return (
-    <svg width="70" height="70" viewBox="0 0 100 100" aria-label="Digital official seal">
-      <circle cx="50" cy="50" r="46" fill="#fff" stroke="#8d641f" strokeWidth="3"/>
-      <circle cx="50" cy="50" r="37" fill="none" stroke="#c39a51" strokeWidth="1.5" strokeDasharray="2 3"/>
-      <text x="50" y="29" textAnchor="middle" fontSize="7" fontWeight="700" fill="#6d4817">ILAVARASI</text>
-      <text x="50" y="39" textAnchor="middle" fontSize="6" fontWeight="700" fill="#6d4817">RAJPUTRI TRAVELS</text>
-      <circle cx="50" cy="52" r="12" fill="#21130d"/>
-      <text x="50" y="57" textAnchor="middle" fontSize="13" fontWeight="800" fill="#e7bd69">RT</text>
-      <text x="50" y="74" textAnchor="middle" fontSize="7" fontWeight="800" fill="#6d4817">✓ OFFICIAL</text>
-    </svg>
   );
 }
