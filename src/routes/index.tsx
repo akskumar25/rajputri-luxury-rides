@@ -239,14 +239,14 @@ function Hero() {
               🚖 Book Your Ride
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </a>
-
-            <a
-              href="/travel-guide"
-              className="group inline-flex items-center justify-center gap-2 rounded-2xl glass px-6 py-4 text-sm font-semibold text-royal shadow-lg hover:bg-royal hover:text-white hover:-translate-y-1 transition-all duration-300"
-            >
-              📝 Travel Guide
-            </a>
-
+<a
+  href="https://blog.rajputritravels.com/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="group inline-flex items-center justify-center gap-2 rounded-2xl glass px-6 py-4 text-sm font-semibold text-royal shadow-lg hover:bg-royal hover:text-white hover:-translate-y-1 transition-all duration-300"
+>
+  📝 Travel Guide
+</a>
             <a
               href="/hotels"
               className="group inline-flex items-center justify-center gap-2 rounded-2xl glass px-6 py-4 text-sm font-semibold text-royal shadow-lg hover:bg-royal hover:text-white hover:-translate-y-1 transition-all duration-300"
