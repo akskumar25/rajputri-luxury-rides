@@ -172,28 +172,74 @@ function RoyalLogo({ small = false }: { small?: boolean }) {
 
 function DigitalSeal() {
   return (
-    <svg width="132" height="132" viewBox="0 0 140 140" aria-label="Rajputri verified digital seal">
+    <svg
+      className="premium-digital-seal"
+      width="154"
+      height="154"
+      viewBox="0 0 160 160"
+      aria-label="Rajputri Digital Trip Sheet Seal"
+      role="img"
+    >
       <defs>
-        <radialGradient id="sealGold" cx="50%" cy="35%" r="70%">
-          <stop offset="0%" stopColor="#fffdf4" />
-          <stop offset="72%" stopColor="#f5e8bd" />
-          <stop offset="100%" stopColor="#e3c76a" />
+        <radialGradient id="sealFace" cx="38%" cy="28%" r="78%">
+          <stop offset="0%" stopColor="#fffdf8" />
+          <stop offset="42%" stopColor="#f9edc7" />
+          <stop offset="78%" stopColor="#e7c96b" />
+          <stop offset="100%" stopColor="#b58a16" />
         </radialGradient>
+        <linearGradient id="sealEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f8df87" />
+          <stop offset="45%" stopColor="#a87908" />
+          <stop offset="72%" stopColor="#f1d16b" />
+          <stop offset="100%" stopColor="#8b6407" />
+        </linearGradient>
+        <filter id="sealShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#07101f" floodOpacity=".22" />
+        </filter>
+        <path id="sealArcTop" d="M 32 72 A 48 48 0 0 1 128 72" />
+        <path id="sealArcBottom" d="M 126 103 A 48 48 0 0 1 34 103" />
       </defs>
-      <circle cx="70" cy="70" r="66" fill="#0b1220" stroke="#d4af37" strokeWidth="3" />
-      <circle cx="70" cy="70" r="58" fill="url(#sealGold)" stroke="#ffffff" strokeWidth="2" />
-      <circle cx="70" cy="70" r="51" fill="none" stroke="#0b1220" strokeWidth="1.5" strokeDasharray="2 3" />
+
+      <circle cx="80" cy="80" r="73" fill="#07101f" filter="url(#sealShadow)" />
+      <circle cx="80" cy="80" r="69" fill="none" stroke="url(#sealEdge)" strokeWidth="3.2" />
+      <circle cx="80" cy="80" r="63" fill="url(#sealFace)" stroke="#fff8df" strokeWidth="1.8" />
+      <circle cx="80" cy="80" r="57" fill="none" stroke="#6e5006" strokeWidth="1.2" strokeDasharray="1.5 3.2" />
+      <circle cx="80" cy="80" r="51" fill="none" stroke="#b58a16" strokeWidth="1.1" />
+
+      <text fill="#172033" fontSize="8.2" fontWeight="900" letterSpacing="1.8" fontFamily="Arial, sans-serif">
+        <textPath href="#sealArcTop" startOffset="50%" textAnchor="middle">
+          RAJPUTRI TOURS &amp; TRAVELS
+        </textPath>
+      </text>
+
+      <text fill="#765707" fontSize="7.2" fontWeight="900" letterSpacing="1.3" fontFamily="Arial, sans-serif">
+        <textPath href="#sealArcBottom" startOffset="50%" textAnchor="middle">
+          DIGITAL TRIP SHEET • OFFICIAL RECORD
+        </textPath>
+      </text>
+
       <path
-        d="M70 27 L75 38 L88 38 L78 46 L82 58 L70 51 L58 58 L62 46 L52 38 L65 38 Z"
+        d="M80 39 L84 48 L94 48 L86 54 L89 64 L80 58 L71 64 L74 54 L66 48 L76 48 Z"
         fill="#b58a16"
-        stroke="#0b1220"
+        stroke="#765707"
         strokeWidth="1"
       />
-      <text x="70" y="78" textAnchor="middle" fontSize="31" fontWeight="900" fontFamily="Georgia, serif" fill="#0b1220">R</text>
-      <line x1="48" y1="84" x2="92" y2="84" stroke="#b58a16" strokeWidth="1.4" />
-      <text x="70" y="96" textAnchor="middle" fontSize="8.2" fontWeight="900" fontFamily="Arial, sans-serif" fill="#0b1220">✓ VERIFIED OFFICIAL</text>
-      <text x="70" y="107" textAnchor="middle" fontSize="8" fontWeight="900" letterSpacing="1.4" fontFamily="Arial, sans-serif" fill="#8b6810">RAJPUTRI</text>
-      <text x="70" y="118" textAnchor="middle" fontSize="6.4" fontWeight="900" letterSpacing=".5" fontFamily="Arial, sans-serif" fill="#172033">DIGITAL TRIP SHEET</text>
+
+      <circle cx="80" cy="79" r="21" fill="#07101f" />
+      <circle cx="80" cy="79" r="17.5" fill="#fffdf4" stroke="#d4af37" strokeWidth="1.5" />
+      <text x="80" y="89" textAnchor="middle" fontSize="28" fontWeight="900" fontFamily="Georgia, serif" fill="#07101f">
+        R
+      </text>
+
+      <circle cx="39" cy="80" r="2.2" fill="#b58a16" />
+      <circle cx="121" cy="80" r="2.2" fill="#b58a16" />
+
+      <text x="80" y="111" textAnchor="middle" fontSize="7.2" fontWeight="900" letterSpacing="1.2" fontFamily="Arial, sans-serif" fill="#07101f">
+        TRIP SHEET
+      </text>
+      <text x="80" y="122" textAnchor="middle" fontSize="6.2" fontWeight="800" letterSpacing=".8" fontFamily="Arial, sans-serif" fill="#765707">
+        RAJPUTRI
+      </text>
     </svg>
   );
 }
@@ -499,13 +545,13 @@ function TripSheet() {
     const seal = `
       <div class="seal">
         <div class="seal-ring">
-          <div class="seal-top">RAJPUTRI</div>
-          <div class="seal-crown">♛</div>
-          <div class="seal-r">R</div>
-          <div class="seal-divider"></div>
-          <div class="seal-check">✓ VERIFIED OFFICIAL</div>
-          <div class="seal-small">DIGITAL TRIP SHEET</div>
-          <div class="seal-bottom">TOURS &amp; TRAVELS</div>
+          <div class="seal-arc seal-arc-top">RAJPUTRI TOURS &amp; TRAVELS</div>
+          <div class="seal-star">✦</div>
+          <div class="seal-core"><span>R</span></div>
+          <div class="seal-line"></div>
+          <div class="seal-title">TRIP SHEET</div>
+          <div class="seal-subtitle">DIGITAL RECORD</div>
+          <div class="seal-arc seal-arc-bottom">OFFICIAL TRAVEL DOCUMENT</div>
         </div>
       </div>`;
 
@@ -701,38 +747,130 @@ function TripSheet() {
     white-space: nowrap;
   }
 
-  /* Premium seal */
-  .seal { display: flex; justify-content: center; align-items: center; }
+  /* Premium embossed seal */
+  .seal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1mm;
+  }
+
   .seal-ring {
-    width: 36mm; height: 36mm;
-    border: 1.1mm solid #07101f;
-    outline: .65mm solid #d4af37;
-    outline-offset: -2.35mm;
+    width: 39mm;
+    height: 39mm;
     border-radius: 50%;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 28%,#fffdf8 0%,#f8edca 62%,#e5cc79 100%);
-    box-shadow: 0 1mm 3mm rgba(7,16,31,.2);
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 34% 25%, #fffef9 0%, #f8edc8 42%, #e2c263 76%, #a87908 100%);
+    border: 1.2mm solid #07101f;
+    box-shadow:
+      0 .9mm 2.6mm rgba(7,16,31,.22),
+      inset 0 .5mm .8mm rgba(255,255,255,.85),
+      inset 0 -.7mm 1.2mm rgba(80,55,0,.22);
+    overflow: hidden;
   }
+
   .seal-ring:before {
-    content:""; position:absolute; inset:2.6mm;
-    border: .25mm dashed #a97e0e; border-radius:50%;
+    content:"";
+    position:absolute;
+    inset:2.3mm;
+    border: .45mm solid #d4af37;
+    border-radius:50%;
+    box-shadow: inset 0 0 0 .45mm rgba(7,16,31,.08);
   }
+
   .seal-ring:after {
-    content:""; position:absolute; inset:5mm;
-    border: .22mm solid rgba(7,16,31,.35); border-radius:50%;
+    content:"";
+    position:absolute;
+    inset:5.1mm;
+    border: .2mm dashed #765707;
+    border-radius:50%;
+    opacity:.9;
   }
-  .seal-top {
-    font-size: 5.6pt; font-weight: 900;
-    letter-spacing: 1.1px; color:#765707; margin-bottom:.5mm;
+
+  .seal-arc {
+    position:absolute;
+    left:0;
+    width:100%;
+    text-align:center;
+    color:#172033;
+    font-weight:900;
+    white-space:nowrap;
+    z-index:2;
   }
-  .seal-crown { font-size: 9pt; line-height:1; color:#b58a16; margin-bottom:.4mm; }
-  .seal-r { font: 900 20pt Georgia,serif; color:#07101f; line-height:1; }
-  .seal-divider { width: 12mm; height:.3mm; background:#b58a16; margin:.7mm 0; }
-  .seal-check { font-size: 5.8pt; font-weight:900; color:#07101f; }
-  .seal-small { margin-top:.7mm; font-size:5.1pt; font-weight:900; color:#172033; letter-spacing:.35px; }
-  .seal-bottom { margin-top:.6mm; font-size:4.7pt; font-weight:900; letter-spacing:.55px; color:#765707; }
+
+  .seal-arc-top {
+    top:6.8mm;
+    font-size:4.8pt;
+    letter-spacing:.75px;
+  }
+
+  .seal-arc-bottom {
+    bottom:6.4mm;
+    font-size:4.25pt;
+    letter-spacing:.55px;
+    color:#765707;
+  }
+
+  .seal-star {
+    position:absolute;
+    top:10.8mm;
+    font-size:8pt;
+    line-height:1;
+    color:#a87908;
+    text-shadow:0 .2mm .3mm rgba(7,16,31,.18);
+    z-index:2;
+  }
+
+  .seal-core {
+    width:13.2mm;
+    height:13.2mm;
+    border-radius:50%;
+    background:#07101f;
+    border:.65mm solid #d4af37;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+    box-shadow:0 .7mm 1.2mm rgba(7,16,31,.18);
+  }
+
+  .seal-core span {
+    color:#fffdf4;
+    font:900 19pt Georgia,serif;
+    line-height:1;
+    transform:translateY(-.2mm);
+  }
+
+  .seal-line {
+    width:10mm;
+    height:.28mm;
+    background:#a87908;
+    margin:.9mm 0 .45mm;
+    z-index:2;
+  }
+
+  .seal-title {
+    color:#07101f;
+    font-size:5.6pt;
+    font-weight:900;
+    letter-spacing:1px;
+    z-index:2;
+  }
+
+  .seal-subtitle {
+    color:#765707;
+    margin-top:.35mm;
+    font-size:4.3pt;
+    font-weight:900;
+    letter-spacing:.8px;
+    z-index:2;
+  }
+
 
   /* Footer is in normal flow, not absolute, so it cannot be cut off */
   .footer {
@@ -787,12 +925,12 @@ function TripSheet() {
 
     <div class="distance"><span class="label">TOTAL DISTANCE</span><span class="value">${totalKm} KM</span></div>
 
-    ${trip.tripType === "Full Day Rental" ? `<div class="rental"><div class="rental-head"><div class="rental-title">FULL DAY RENTAL · ₹2,000 / DAY</div><div class="rental-price">${money(rentalAmount)}</div></div><div class="rental-copy"><b>One Day Rental = 12 Hours or 200 KM.</b> Fixed package charge; lower KM does not reduce the daily rental charge and KM-based calculation does not apply. After 200 KM, up to 20 additional KM is free. Beyond 220 KM, next day rental charge of ₹2,000 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.</div></div>` : ""}
+    ${trip.tripType === "Full Day Rental" ? `<div class="rental"><div class="rental-head"><div class="rental-title">FULL DAY RENTAL · ₹3,000 / DAY</div><div class="rental-price">${money(rentalAmount)}</div></div><div class="rental-copy"><b>ONE DAY RENTAL = 12 HOURS OR 200 KM.</b> Fixed package charge; lower KM does not reduce the daily rental charge. Beyond 200 KM, the next rental day charge of ₹3,000 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.</div></div>` : ""}
 
     <div class="charges">
       <div class="charges-head">04 &nbsp; CHARGES &amp; PAYMENT SUMMARY</div>
       <table><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody>
-        <tr><td>${trip.tripType === "Full Day Rental" ? `Daily Rental (${rentalDays} day × ₹2,000)` : "Vehicle Charge"}</td><td>${money(vehicleCharge)}</td></tr>
+        <tr><td>${trip.tripType === "Full Day Rental" ? `Daily Rental (${rentalDays} day × ₹3,000)` : "Vehicle Charge"}</td><td>${money(vehicleCharge)}</td></tr>
         <tr><td>Toll</td><td>${money(toll)}</td></tr>
         <tr><td>Parking</td><td>${money(parking)}</td></tr>
         <tr><td>Permit</td><td>${money(permit)}</td></tr>
@@ -906,8 +1044,8 @@ function TripSheet() {
         }
 
         .distance-live strong {
-          color: #8a680d;
-          font-size: 18px;
+          color: #7a5a08;
+          font-size: 19px;
           font-weight: 900;
           letter-spacing: .2px;
         }
@@ -1566,6 +1704,15 @@ function TripSheet() {
             text-align: center;
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-width: 170px;
+            padding: 2mm 1mm;
+          }
+
+          .p-seal .premium-digital-seal {
+            width: 158px;
+            height: 158px;
+            filter: drop-shadow(0 4px 7px rgba(7,16,31,.16));
           }
 
           .p-footer {
@@ -1706,19 +1853,19 @@ function TripSheet() {
               <div className="rental-rules">
                 <div className="rental-rule">
                   <b>1 DAY</b>
-                  12 HOURS / 200 KM
+                  ONE DAY · 12 HOURS / 200 KM
                 </div>
                 <div className="rental-rule">
-                  <b>DAILY LIMIT</b>
-                  Up to 200 KM
+                  <b>ONE DAY</b>
+                  12 Hours / 200 KM
                 </div>
                 <div className="rental-rule">
                   <b>ABOVE 200 KM</b>
-                  Additional day applies
+                  Next day rental applies
                 </div>
                 <div className="rental-rule">
-                  <b>PACKAGE</b>
-                  ₹2,000 / DAY
+                  <b>RATE</b>
+                  ₹3,000 / DAY
                 </div>
               </div>
 
@@ -2046,9 +2193,9 @@ function TripSheet() {
                 FULL DAY RENTAL — {money(DAILY_RENTAL)} / DAY · {rentalDays} DAY(S) = {money(rentalAmount)}
               </div>
               <div className="p-rental-lines">
-                <b>One Day Rental = 12 Hours or 200 KM.</b> Fixed package charge; lower KM does not reduce
+                <b>ONE DAY RENTAL = 12 HOURS OR 200 KM.</b> Fixed package charge; lower KM does not reduce
                 the daily rental charge and KM-based calculation does not apply.
-                Beyond 200 KM, the next rental day charge of ₹2,000 applies. Fuel, Toll, Parking,
+                Beyond 200 KM, the next rental day charge of ₹3,000 applies. Fuel, Toll, Parking,
                 Permit and other applicable charges are payable by the customer.
               </div>
             </div>
@@ -2064,7 +2211,7 @@ function TripSheet() {
               </thead>
               <tbody>
                 {trip.tripType === "Full Day Rental" ? (
-                  <tr><td>Daily Rental ({rentalDays} day × ₹2,000)</td><td>{money(rentalAmount)}</td></tr>
+                  <tr><td>Daily Rental ({rentalDays} day × ₹3,000)</td><td>{money(rentalAmount)}</td></tr>
                 ) : (
                   <tr><td>Vehicle Charge</td><td>{money(regularVehicleCharge)}</td></tr>
                 )}
