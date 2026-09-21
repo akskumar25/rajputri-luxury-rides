@@ -59,7 +59,7 @@ type Trip = {
 };
 
 const STORAGE_KEY = "rajputri_trip_history_v4";
-const DAILY_RENTAL = 2000;
+const DAILY_RENTAL = 2700;
 
 const todayString = () => {
   const d = new Date();
