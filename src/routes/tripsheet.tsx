@@ -483,7 +483,7 @@ function TripSheet() {
 
   const saveOwnerPin = () => {
     const pin = newOwnerPin.trim();
-    if (!/^\\d{4,8}$/.test(pin)) {
+    if (!/^\d{4,8}$/.test(pin)) {
       window.alert("Owner PIN 4 முதல் 8 இலக்கங்கள் இருக்க வேண்டும்.");
       return;
     }
