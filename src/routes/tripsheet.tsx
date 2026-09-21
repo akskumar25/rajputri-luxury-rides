@@ -925,12 +925,12 @@ function TripSheet() {
 
     <div class="distance"><span class="label">TOTAL DISTANCE</span><span class="value">${totalKm} KM</span></div>
 
-    ${trip.tripType === "Full Day Rental" ? `<div class="rental"><div class="rental-head"><div class="rental-title">FULL DAY RENTAL · ₹3,000 / DAY</div><div class="rental-price">${money(rentalAmount)}</div></div><div class="rental-copy"><b>ONE DAY RENTAL = 12 HOURS OR 200 KM.</b> Fixed package charge; lower KM does not reduce the daily rental charge. Beyond 200 KM, the next rental day charge of ₹3,000 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.</div></div>` : ""}
+    ${trip.tripType === "Full Day Rental" ? `<div class="rental"><div class="rental-head"><div class="rental-title">FULL DAY RENTAL · ₹2,700 / DAY</div><div class="rental-price">${money(rentalAmount)}</div></div><div class="rental-copy"><b>ONE DAY RENTAL = 12 HOURS OR 200 KM. RENTAL ₹2,700 / DAY. DRIVER SALARY ₹700 / DAY.</b> Fixed package charge; lower KM does not reduce the daily rental charge. Beyond 200 KM, the next rental day charge of ₹2,700 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.</div></div>` : ""}
 
     <div class="charges">
       <div class="charges-head">04 &nbsp; CHARGES &amp; PAYMENT SUMMARY</div>
       <table><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody>
-        <tr><td>${trip.tripType === "Full Day Rental" ? `Daily Rental (${rentalDays} day × ₹3,000)` : "Vehicle Charge"}</td><td>${money(vehicleCharge)}</td></tr>
+        <tr><td>${trip.tripType === "Full Day Rental" ? `Daily Rental (${rentalDays} day × ₹2,700)` : "Vehicle Charge"}</td><td>${money(vehicleCharge)}</td></tr>
         <tr><td>Toll</td><td>${money(toll)}</td></tr>
         <tr><td>Parking</td><td>${money(parking)}</td></tr>
         <tr><td>Permit</td><td>${money(permit)}</td></tr>
@@ -1865,7 +1865,7 @@ function TripSheet() {
                 </div>
                 <div className="rental-rule">
                   <b>RATE</b>
-                  ₹3,000 / DAY
+                  ₹2,700 / DAY
                 </div>
               </div>
 
@@ -2193,9 +2193,9 @@ function TripSheet() {
                 FULL DAY RENTAL — {money(DAILY_RENTAL)} / DAY · {rentalDays} DAY(S) = {money(rentalAmount)}
               </div>
               <div className="p-rental-lines">
-                <b>ONE DAY RENTAL = 12 HOURS OR 200 KM.</b> Fixed package charge; lower KM does not reduce
+                <b>ONE DAY RENTAL = 12 HOURS OR 200 KM. RENTAL ₹2,700 / DAY. DRIVER SALARY ₹700 / DAY.</b> Fixed package charge; lower KM does not reduce
                 the daily rental charge and KM-based calculation does not apply.
-                Beyond 200 KM, the next rental day charge of ₹3,000 applies. Fuel, Toll, Parking,
+                Beyond 200 KM, the next rental day charge of ₹2,700 applies. Fuel, Toll, Parking,
                 Permit and other applicable charges are payable by the customer.
               </div>
             </div>
@@ -2211,7 +2211,7 @@ function TripSheet() {
               </thead>
               <tbody>
                 {trip.tripType === "Full Day Rental" ? (
-                  <tr><td>Daily Rental ({rentalDays} day × ₹3,000)</td><td>{money(rentalAmount)}</td></tr>
+                  <tr><td>Daily Rental ({rentalDays} day × ₹2,700)</td><td>{money(rentalAmount)}</td></tr>
                 ) : (
                   <tr><td>Vehicle Charge</td><td>{money(regularVehicleCharge)}</td></tr>
                 )}
