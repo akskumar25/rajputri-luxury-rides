@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  BarChart3,
   CalendarDays,
   Car,
   CheckCircle2,
@@ -8,11 +9,13 @@ import {
   FileText,
   History,
   IndianRupee,
+  LockKeyhole,
   MapPin,
   MessageCircle,
   Phone,
   Printer,
   Search,
+  Settings2,
   Trash2,
   UserRound,
   X,
@@ -55,6 +58,10 @@ type Trip = {
   permit: string;
   driverBata: string;
   other: string;
+  driverSalaryPaid: string;
+  fuelExpense: string;
+  maintenanceExpense: string;
+  vehicleOtherExpense: string;
   notes: string;
 };
 
@@ -129,6 +136,10 @@ const createTrip = (tripNo = "RT-0001"): Trip => ({
   permit: "",
   driverBata: "",
   other: "",
+  driverSalaryPaid: "",
+  fuelExpense: "",
+  maintenanceExpense: "",
+  vehicleOtherExpense: "",
   notes: "",
 });
 
@@ -309,6 +320,12 @@ function TripSheet() {
   const [historySearch, setHistorySearch] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
+  const [showOwnerLogin, setShowOwnerLogin] = useState(false);
+  const [ownerUnlocked, setOwnerUnlocked] = useState(false);
+  const [ownerPinInput, setOwnerPinInput] = useState("");
+  const [ownerPin, setOwnerPin] = useState(() => localStorage.getItem("rajputri_owner_pin") || "2580");
+  const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
+  const [newOwnerPin, setNewOwnerPin] = useState("");
 
   useEffect(() => {
     try {
@@ -371,6 +388,89 @@ function TripSheet() {
     trip.tripType === "Full Day Rental"
       ? rentalAmount + toll + parking + permit + driverBata + other
       : regularVehicleCharge + toll + parking + permit + driverBata + other;
+
+  // Internal owner accounting. Never used in customer PDF / Print / WhatsApp.
+  const currentTripRevenue =
+    trip.tripType === "Full Day Rental" ? rentalAmount : regularVehicleCharge;
+  const currentDriverSalary =
+    numberValue(trip.driverSalaryPaid) ||
+    (trip.tripType === "Full Day Rental" ? rentalDays * 700 : driverBata);
+  const currentFuelExpense = numberValue(trip.fuelExpense);
+  const currentMaintenanceExpense = numberValue(trip.maintenanceExpense);
+  const currentVehicleOtherExpense = numberValue(trip.vehicleOtherExpense);
+  const currentOperatingProfit =
+    currentTripRevenue - currentDriverSalary - currentFuelExpense -
+    currentMaintenanceExpense - currentVehicleOtherExpense;
+
+  const getTripAudit = (item: Trip) => {
+    const km =
+      numberValue(item.closeKm) > numberValue(item.startKm)
+        ? numberValue(item.closeKm) - numberValue(item.startKm)
+        : 0;
+    let days = 0;
+    if (item.tripType === "Full Day Rental") {
+      const start = new Date(`${item.date}T${item.reportingTime || "00:00"}`);
+      const end = new Date(`${item.endDate || item.date}T${item.releaseTime || "00:00"}`);
+      const hours = end.getTime() > start.getTime()
+        ? (end.getTime() - start.getTime()) / 3600000 : 0;
+      days = Math.max(1, hours > 0 ? Math.ceil(hours / 12) : 1, km > 0 ? Math.ceil(km / 200) : 1);
+    }
+    const revenue = item.tripType === "Full Day Rental" ? days * DAILY_RENTAL : numberValue(item.vehicleCharge);
+    const driverSalary = numberValue(item.driverSalaryPaid) ||
+      (item.tripType === "Full Day Rental" ? days * 700 : numberValue(item.driverBata));
+    const fuel = numberValue(item.fuelExpense);
+    const maintenance = numberValue(item.maintenanceExpense);
+    const vehicleOtherExpense = numberValue(item.vehicleOtherExpense);
+    return {
+      km, days, revenue,
+      customerTotal: revenue + numberValue(item.toll) + numberValue(item.parking) +
+        numberValue(item.permit) + numberValue(item.driverBata) + numberValue(item.other),
+      driverSalary, fuel, maintenance, vehicleOtherExpense,
+      operatingProfit: revenue - driverSalary - fuel - maintenance - vehicleOtherExpense,
+    };
+  };
+
+  const auditSummary = useMemo(() => filteredHistory.reduce(
+    (acc, item) => {
+      const a = getTripAudit(item);
+      acc.trips += 1; acc.km += a.km; acc.rentalDays += a.days;
+      acc.revenue += a.revenue; acc.customerBilling += a.customerTotal;
+      acc.driverSalary += a.driverSalary; acc.fuel += a.fuel;
+      acc.maintenance += a.maintenance; acc.vehicleOtherExpense += a.vehicleOtherExpense;
+      acc.operatingProfit += a.operatingProfit;
+      return acc;
+    },
+    { trips: 0, km: 0, rentalDays: 0, revenue: 0, customerBilling: 0,
+      driverSalary: 0, fuel: 0, maintenance: 0, vehicleOtherExpense: 0, operatingProfit: 0 }
+  ), [filteredHistory]);
+
+  const unlockOwner = () => {
+    if (ownerPinInput === ownerPin) {
+      setOwnerUnlocked(true);
+      setOwnerPinInput("");
+      setShowOwnerLogin(false);
+      setShowOwnerDashboard(true);
+    } else {
+      window.alert("Owner PIN தவறாக உள்ளது.");
+    }
+  };
+
+  const lockOwner = () => {
+    setOwnerUnlocked(false);
+    setShowOwnerDashboard(false);
+  };
+
+  const saveOwnerPin = () => {
+    const pin = newOwnerPin.trim();
+    if (!/^\\d{4,8}$/.test(pin)) {
+      window.alert("Owner PIN 4 முதல் 8 இலக்கங்கள் இருக்க வேண்டும்.");
+      return;
+    }
+    localStorage.setItem("rajputri_owner_pin", pin);
+    setOwnerPin(pin);
+    setNewOwnerPin("");
+    window.alert("Owner PIN மாற்றப்பட்டது.");
+  };
 
   const filteredHistory = useMemo(() => {
     const q = historySearch.trim().toLowerCase();
@@ -925,7 +1025,7 @@ function TripSheet() {
 
     <div class="distance"><span class="label">TOTAL DISTANCE</span><span class="value">${totalKm} KM</span></div>
 
-    ${trip.tripType === "Full Day Rental" ? `<div class="rental"><div class="rental-head"><div class="rental-title">FULL DAY RENTAL · ₹2,700 / DAY</div><div class="rental-price">${money(rentalAmount)}</div></div><div class="rental-copy"><b>ONE DAY RENTAL = 12 HOURS OR 200 KM. RENTAL ₹2,700 / DAY. DRIVER SALARY ₹700 / DAY.</b> Fixed package charge; lower KM does not reduce the daily rental charge. Beyond 200 KM, the next rental day charge of ₹2,700 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.</div></div>` : ""}
+    ${trip.tripType === "Full Day Rental" ? `<div class="rental"><div class="rental-head"><div class="rental-title">FULL DAY RENTAL · ₹2,700 / DAY</div><div class="rental-price">${money(rentalAmount)}</div></div><div class="rental-copy"><b>ONE DAY RENTAL = 12 HOURS OR 200 KM. RENTAL ₹2,700 / DAY.</b> Fixed package charge; lower KM does not reduce the daily rental charge. Beyond 200 KM, the next rental day charge of ₹2,700 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable by the customer.</div></div>` : ""}
 
     <div class="charges">
       <div class="charges-head">04 &nbsp; CHARGES &amp; PAYMENT SUMMARY</div>
@@ -1087,6 +1187,29 @@ function TripSheet() {
         .history-item strong { display: block; }
         .history-item small { color: #666; }
         .empty { text-align: center; padding: 30px 10px; color: #777; }
+        .owner-only-card { border: 1px solid #d4af37; background: linear-gradient(135deg,#fffdf5,#ffffff); }
+        .owner-note { background:#f8f3df; border:1px solid #e7d58e; border-radius:9px; padding:10px 12px; margin-bottom:12px; color:#5e4b12; font-size:12px; font-weight:700; }
+        .owner-expense-grid { grid-template-columns: repeat(4, 1fr); }
+        .owner-mini-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+        .owner-mini-summary span { background:#f7f8fa; border:1px solid #dde2e8; border-radius:10px; padding:10px 12px; font-size:12px; color:#5a6575; }
+        .owner-mini-summary b { display:block; margin-top:4px; font-size:17px; color:#162238; }
+        .profit-positive { color:#137a43 !important; }
+        .profit-negative { color:#b42318 !important; }
+        .owner-login-box { max-width:420px; margin:20px auto 5px; display:grid; gap:10px; }
+        .owner-login-box label { font-weight:900; color:#263247; }
+        .owner-login-box small { color:#6b7280; line-height:1.5; }
+        .owner-dashboard { max-width:1100px !important; }
+        .owner-dashboard-tools { margin-top:16px; }
+        .audit-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px; }
+        .audit-card { background:linear-gradient(135deg,#fff,#f6f7f9); border:1px solid #dfe3e9; border-radius:12px; padding:15px; min-height:92px; }
+        .audit-card small { display:block; color:#687385; font-weight:900; letter-spacing:.5px; font-size:10px; }
+        .audit-card strong { display:block; margin-top:8px; font-size:22px; color:#111827; }
+        .audit-profit { border:2px solid #d4af37; background:linear-gradient(135deg,#fffdf2,#f7f2df); }
+        .owner-settings { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-top:18px; padding:14px; border:1px solid #e0e3e8; border-radius:12px; background:#fafafa; }
+        .owner-settings strong { display:flex; align-items:center; gap:7px; }
+        .owner-settings small { display:block; color:#6b7280; margin-top:4px; }
+        .owner-pin-change { display:flex; gap:8px; min-width:300px; }
+        .owner-pin-change input { min-width:150px; }
         .print-area { display: none; }
 
 
@@ -1461,6 +1584,12 @@ function TripSheet() {
           }
         }
 
+        @media (max-width: 760px) {
+          .owner-expense-grid, .owner-mini-summary, .audit-grid { grid-template-columns:1fr; }
+          .owner-settings { flex-direction:column; align-items:stretch; }
+          .owner-pin-change { min-width:0; width:100%; }
+        }
+
         @media print {
           @page { size: A4 portrait; margin: 0; }
           html, body {
@@ -1760,6 +1889,14 @@ function TripSheet() {
           <button className="btn" onClick={() => setShowHistory(true)} title="Open saved trip history">
             <History size={16} /> Trip History
           </button>
+          <button
+            className="btn gold"
+            onClick={() => ownerUnlocked ? setShowOwnerDashboard(true) : setShowOwnerLogin(true)}
+            title="Owner-only business dashboard"
+          >
+            {ownerUnlocked ? <BarChart3 size={16} /> : <LockKeyhole size={16} />}
+            Owner Dashboard
+          </button>
         </div>
       </header>
 
@@ -2030,6 +2167,26 @@ function TripSheet() {
           </div>
         </section>
 
+        {ownerUnlocked && (
+          <section className="card owner-only-card">
+            <div className="section-title"><LockKeyhole size={18} /> Owner-Only Internal Expenses</div>
+            <div className="owner-note">
+              இந்த விவரங்கள் உங்கள் internal calculation-க்கு மட்டும். Customer PDF / Print / WhatsApp-ல் இவை காட்டப்படாது.
+            </div>
+            <div className="charge-grid owner-expense-grid">
+              <ChargeField label="Driver Salary Paid" value={trip.driverSalaryPaid} onChange={(v) => update("driverSalaryPaid", v)} />
+              <ChargeField label="Fuel Expense" value={trip.fuelExpense} onChange={(v) => update("fuelExpense", v)} />
+              <ChargeField label="Maintenance Expense" value={trip.maintenanceExpense} onChange={(v) => update("maintenanceExpense", v)} />
+              <ChargeField label="Vehicle Other Expense" value={trip.vehicleOtherExpense} onChange={(v) => update("vehicleOtherExpense", v)} />
+            </div>
+            <div className="owner-mini-summary">
+              <span>Trip Revenue <b>{money(currentTripRevenue)}</b></span>
+              <span>Driver Salary <b>{money(currentDriverSalary)}</b></span>
+              <span>Operating Profit <b className={currentOperatingProfit >= 0 ? "profit-positive" : "profit-negative"}>{money(currentOperatingProfit)}</b></span>
+            </div>
+          </section>
+        )}
+
         <section className="card">
           <div className="section-title">
             <FileText size={18} /> Notes
@@ -2042,6 +2199,69 @@ function TripSheet() {
         </section>
 
       </main>
+
+      {showOwnerLogin && (
+        <div className="history-overlay" role="dialog" aria-modal="true" aria-label="Owner login">
+          <div className="history-modal owner-login-modal">
+            <div className="history-header">
+              <div>
+                <div className="history-title"><LockKeyhole size={19} /> Owner Dashboard</div>
+                <div className="history-meta">Internal business information</div>
+              </div>
+              <button className="btn" onClick={() => { setShowOwnerLogin(false); setOwnerPinInput(""); }}><X size={17} /> Close</button>
+            </div>
+            <div className="owner-login-box">
+              <label>Owner PIN</label>
+              <input type="password" inputMode="numeric" maxLength={8} autoFocus value={ownerPinInput}
+                onChange={(e) => setOwnerPinInput(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                onKeyDown={(e) => { if (e.key === "Enter") unlockOwner(); }} placeholder="Enter PIN" />
+              <button className="btn gold" onClick={unlockOwner}><LockKeyhole size={16} /> Unlock</button>
+              <small>Default first-time PIN: 2580. Change it from Owner Settings after unlocking.</small>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOwnerDashboard && ownerUnlocked && (
+        <div className="history-overlay" role="dialog" aria-modal="true" aria-label="Owner business dashboard">
+          <div className="history-modal owner-dashboard">
+            <div className="history-header">
+              <div>
+                <div className="history-title"><BarChart3 size={19} /> Owner Business Dashboard</div>
+                <div className="history-meta">{historyMonth || "All dates"} · Internal only</div>
+              </div>
+              <div className="history-tools">
+                <button className="btn" onClick={() => setShowOwnerDashboard(false)}>Close</button>
+                <button className="btn dark" onClick={lockOwner}><LockKeyhole size={16} /> Lock</button>
+              </div>
+            </div>
+            <div className="history-tools owner-dashboard-tools">
+              <input type="month" value={historyMonth} onChange={(e) => setHistoryMonth(e.target.value)} className="history-month" />
+              <div className="searchbox"><Search size={16} /><input placeholder="Search customer / trip / vehicle" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} /></div>
+            </div>
+            <div className="audit-grid">
+              <div className="audit-card"><small>TRIPS</small><strong>{auditSummary.trips}</strong></div>
+              <div className="audit-card"><small>TOTAL KM</small><strong>{auditSummary.km.toLocaleString("en-IN")} KM</strong></div>
+              <div className="audit-card"><small>TRIP REVENUE</small><strong>{money(auditSummary.revenue)}</strong></div>
+              <div className="audit-card"><small>CUSTOMER BILLING</small><strong>{money(auditSummary.customerBilling)}</strong></div>
+              <div className="audit-card"><small>DRIVER SALARY</small><strong>{money(auditSummary.driverSalary)}</strong></div>
+              <div className="audit-card"><small>FUEL</small><strong>{money(auditSummary.fuel)}</strong></div>
+              <div className="audit-card"><small>MAINTENANCE</small><strong>{money(auditSummary.maintenance)}</strong></div>
+              <div className="audit-card"><small>VEHICLE OTHER</small><strong>{money(auditSummary.vehicleOtherExpense)}</strong></div>
+              <div className="audit-card audit-profit"><small>OPERATING PROFIT</small><strong className={auditSummary.operatingProfit >= 0 ? "profit-positive" : "profit-negative"}>{money(auditSummary.operatingProfit)}</strong></div>
+            </div>
+            <div className="owner-settings">
+              <div><strong><Settings2 size={16} /> Owner Settings</strong><small>Change the internal PIN used for this dashboard.</small></div>
+              <div className="owner-pin-change">
+                <input type="password" inputMode="numeric" maxLength={8} value={newOwnerPin}
+                  onChange={(e) => setNewOwnerPin(e.target.value.replace(/\D/g, "").slice(0, 8))} placeholder="New PIN" />
+                <button className="btn" onClick={saveOwnerPin}>Save PIN</button>
+              </div>
+            </div>
+            <div className="owner-disclaimer"><b>Internal use only.</b> These figures are never inserted into customer PDF, Print or WhatsApp output.</div>
+          </div>
+        </div>
+      )}
 
       {showHistory && (
         <div className="history-overlay" role="dialog" aria-modal="true" aria-label="Trip history">
@@ -2193,7 +2413,7 @@ function TripSheet() {
                 FULL DAY RENTAL — {money(DAILY_RENTAL)} / DAY · {rentalDays} DAY(S) = {money(rentalAmount)}
               </div>
               <div className="p-rental-lines">
-                <b>ONE DAY RENTAL = 12 HOURS OR 200 KM. RENTAL ₹2,700 / DAY. DRIVER SALARY ₹700 / DAY.</b> Fixed package charge; lower KM does not reduce
+                <b>ONE DAY RENTAL = 12 HOURS OR 200 KM. RENTAL ₹2,700 / DAY.</b> Fixed package charge; lower KM does not reduce
                 the daily rental charge and KM-based calculation does not apply.
                 Beyond 200 KM, the next rental day charge of ₹2,700 applies. Fuel, Toll, Parking,
                 Permit and other applicable charges are payable by the customer.
