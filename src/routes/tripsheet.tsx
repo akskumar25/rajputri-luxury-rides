@@ -831,6 +831,7 @@ function TripSheet() {
         .trip-app { min-height: 100vh; }
         .topbar {
           position: sticky; top: 0; z-index: 30;
+          isolation: isolate;
           background: linear-gradient(90deg,#07101f,#101827 55%,#07101f); color: white; border-bottom: 3px solid #d4af37;
           padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
         }
@@ -918,6 +919,257 @@ function TripSheet() {
         .empty { text-align: center; padding: 30px 10px; color: #777; }
         .print-area { display: none; }
 
+
+        /* Professional office-grade application layer */
+        .topbar {
+          min-height: 78px;
+          padding: 10px 24px;
+          box-shadow: 0 8px 24px rgba(7,16,31,.18);
+          backdrop-filter: blur(12px);
+        }
+
+        .brand {
+          min-width: 240px;
+        }
+
+        .brand-title {
+          font-size: 21px;
+          line-height: 1;
+        }
+
+        .brand-sub {
+          font-size: 10px;
+          letter-spacing: 1.8px;
+        }
+
+        .toolbar {
+          align-items: center;
+          gap: 7px;
+          flex-wrap: nowrap;
+        }
+
+        .toolbar .btn {
+          min-height: 42px;
+          white-space: nowrap;
+          border-radius: 10px;
+          padding: 9px 13px;
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .toolbar .btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(15,23,42,.12);
+        }
+
+        .container {
+          max-width: 1280px;
+          padding: 28px 24px 42px;
+        }
+
+        .notice {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 16px;
+          padding: 16px 18px;
+          margin-bottom: 18px;
+          border: 1px solid #e4d59e;
+          border-left: 4px solid #c9a227;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #fffdf6, #f9f6ea);
+          box-shadow: 0 5px 18px rgba(15,23,42,.045);
+        }
+
+        .notice-main {
+          min-width: 0;
+        }
+
+        .notice-title {
+          color: #111827;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 1.5px;
+        }
+
+        .notice-copy {
+          margin-top: 5px;
+          color: #596273;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .notice-flow {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #6f5713;
+          font-size: 11px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .notice-flow span {
+          padding: 7px 9px;
+          border: 1px solid #eadcae;
+          border-radius: 999px;
+          background: rgba(255,255,255,.75);
+        }
+
+        .saved {
+          grid-column: 1 / -1;
+          margin-top: -3px;
+          color: #167743;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .card {
+          border-color: #d9dee7;
+          border-radius: 15px;
+          padding: 21px;
+          box-shadow: 0 5px 20px rgba(15,23,42,.055);
+          transition: box-shadow .2s ease, border-color .2s ease;
+        }
+
+        .card:hover {
+          border-color: #d2b55d;
+          box-shadow: 0 8px 26px rgba(15,23,42,.075);
+        }
+
+        .section-title {
+          font-size: 16px;
+          letter-spacing: .1px;
+          color: #162238;
+          margin-bottom: 16px;
+          padding-bottom: 11px;
+        }
+
+        .field > span,
+        .charge-field > span {
+          font-size: 11px;
+          letter-spacing: .45px;
+          text-transform: uppercase;
+          color: #566173;
+        }
+
+        input, select, textarea {
+          min-height: 46px;
+          border-color: #cbd2dd;
+          border-radius: 9px;
+          transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        input:hover, select:hover, textarea:hover {
+          border-color: #aeb8c7;
+        }
+
+        input:focus, select:focus, textarea:focus {
+          border-color: #b38a1b;
+          box-shadow: 0 0 0 3px rgba(201,162,39,.10);
+        }
+
+        .total-box {
+          border: 1px solid #2a3342;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 7px 20px rgba(7,16,31,.12);
+        }
+
+        .total {
+          font-size: 29px;
+          letter-spacing: -.5px;
+        }
+
+        .history-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          background: rgba(5,10,18,.68);
+          padding: 22px;
+          overflow-y: auto;
+          backdrop-filter: blur(5px);
+        }
+
+        .history-modal {
+          max-width: 1180px;
+          margin: 0 auto;
+          background: #f8fafc;
+          border: 1px solid rgba(255,255,255,.28);
+          border-radius: 18px;
+          padding: 20px;
+          min-height: 80vh;
+          box-shadow: 0 24px 70px rgba(0,0,0,.28);
+        }
+
+        .history-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #162238;
+          font-size: 18px;
+          font-weight: 900;
+        }
+
+        .history-meta {
+          margin-top: 4px;
+          color: #6b7280;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .history-tools {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          flex-wrap: wrap;
+          margin-top: 16px;
+          padding: 11px;
+          border: 1px solid #dde2ea;
+          border-radius: 12px;
+          background: #fff;
+        }
+
+        .history-month {
+          max-width: 180px;
+        }
+
+        .history-item {
+          border: 1px solid #dce1e8;
+          border-radius: 12px;
+          padding: 13px;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(15,23,42,.035);
+          transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+
+        .history-item:hover {
+          border-color: #d2b55d;
+          box-shadow: 0 7px 18px rgba(15,23,42,.07);
+          transform: translateY(-1px);
+        }
+
+        .history-item small {
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: .55px;
+          text-transform: uppercase;
+          color: #7a8494;
+        }
+
+        .history-item strong {
+          color: #182235;
+          font-size: 13px;
+        }
+
+        .history-list {
+          margin-top: 13px;
+        }
+
+        .empty {
+          margin-top: 13px;
+          border: 1px dashed #cbd2dd;
+          border-radius: 12px;
+          background: #fff;
+        }
+
         @media (max-width: 900px) {
           .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
           .charge-grid { grid-template-columns: repeat(3, 1fr); }
@@ -925,16 +1177,107 @@ function TripSheet() {
           .history-item { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 600px) {
-          .topbar { align-items: flex-start; flex-direction: column; }
-          .toolbar { width: 100%; justify-content: flex-start; }
-          .container { padding: 12px; }
-          .grid, .grid.two, .charge-grid { grid-template-columns: 1fr; }
-          .rental-head { align-items: flex-start; flex-direction: column; }
-          .rental-rules { grid-template-columns: 1fr; }
-          .total-box { align-items: flex-start; flex-direction: column; }
-          .total { font-size: 24px; }
-          .history-tools { width: 100%; }
-          .searchbox, .searchbox input { width: 100%; }
+          .topbar {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 8px;
+            padding: 9px 12px;
+          }
+
+          .brand {
+            min-width: 0;
+          }
+
+          .brand-title {
+            font-size: 19px;
+          }
+
+          .toolbar {
+            width: 100%;
+            justify-content: flex-start;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 2px;
+            scrollbar-width: thin;
+          }
+
+          .toolbar .btn {
+            flex: 0 0 auto;
+            min-height: 40px;
+            padding: 8px 11px;
+            font-size: 12px;
+          }
+
+          .container {
+            padding: 12px 10px 30px;
+          }
+
+          .notice {
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 14px;
+          }
+
+          .notice-flow {
+            white-space: normal;
+            flex-wrap: wrap;
+          }
+
+          .notice-flow span {
+            padding: 6px 8px;
+          }
+
+          .grid, .grid.two, .charge-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .rental-head {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .rental-rules {
+            grid-template-columns: 1fr;
+          }
+
+          .total-box {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .total {
+            font-size: 24px;
+          }
+
+          .history-overlay {
+            padding: 8px;
+          }
+
+          .history-modal {
+            padding: 12px;
+            border-radius: 14px;
+          }
+
+          .history-header {
+            align-items: flex-start;
+          }
+
+          .history-tools {
+            width: 100%;
+          }
+
+          .history-month {
+            max-width: none;
+            width: 100%;
+          }
+
+          .searchbox, .searchbox input {
+            width: 100%;
+          }
+
+          .history-item {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media print {
@@ -1211,29 +1554,38 @@ function TripSheet() {
           </div>
         </div>
 
-        <div className="toolbar">
-          <button className="btn dark" onClick={newTrip}>
-            <FileText size={16} /> New
+        <div className="toolbar" aria-label="Trip actions">
+          <button className="btn dark" onClick={newTrip} title="Start a new trip">
+            <FileText size={16} /> New Trip
           </button>
-          <button className="btn gold" onClick={saveTrip}>
-            <CheckCircle2 size={16} /> Save
+          <button className="btn gold" onClick={saveTrip} title="Save this trip">
+            <CheckCircle2 size={16} /> Save Trip
           </button>
-          <button className="btn" onClick={openPremiumPdf}>
+          <button className="btn" onClick={openPremiumPdf} title="Create A4 PDF / Print">
             <Printer size={16} /> PDF / Print
           </button>
-          <button className="btn green" onClick={whatsapp}>
+          <button className="btn green" onClick={whatsapp} title="Send trip summary on WhatsApp">
             <MessageCircle size={16} /> WhatsApp
           </button>
-          <button className="btn" onClick={() => setShowHistory(true)}>
-            <History size={16} /> History
+          <button className="btn" onClick={() => setShowHistory(true)} title="Open saved trip history">
+            <History size={16} /> Trip History
           </button>
         </div>
       </header>
 
       <main className="container">
         <div className="notice">
-          <strong>Digital Trip Sheet</strong>
-          Customer-facing A4 Trip Sheet. Save செய்து PDF / Print மூலம் A4-ல் ஒரே பக்கமாக உருவாக்கலாம்.
+          <div className="notice-main">
+            <div className="notice-title">DIGITAL TRIP SHEET</div>
+            <div className="notice-copy">
+              Complete the trip details, save the record, then create a professional A4 document or share the trip summary on WhatsApp.
+            </div>
+          </div>
+          <div className="notice-flow">
+            <span>01&nbsp; Enter</span>
+            <span>02&nbsp; Save</span>
+            <span>03&nbsp; PDF / WhatsApp</span>
+          </div>
           {savedMessage && <div className="saved">✓ {savedMessage}</div>}
         </div>
 
@@ -1496,52 +1848,17 @@ function TripSheet() {
           />
         </section>
 
-        <div className="action-row">
-          <button className="btn dark" onClick={newTrip}>
-            <FileText size={17} /> New Trip
-          </button>
-          <button className="btn gold" onClick={saveTrip}>
-            <CheckCircle2 size={17} /> Save Trip
-          </button>
-          <button className="btn" onClick={openPremiumPdf}>
-            <Printer size={17} /> Create PDF
-          </button>
-          <button className="btn green" onClick={whatsapp}>
-            <MessageCircle size={17} /> Send WhatsApp
-          </button>
-          <button className="btn" onClick={() => setShowHistory(true)}>
-            <History size={17} /> Monthly History
-          </button>
-        </div>
       </main>
 
       {showHistory && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            background: "rgba(0,0,0,.55)",
-            padding: 18,
-            overflowY: "auto",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              background: "white",
-              borderRadius: 14,
-              padding: 18,
-              minHeight: "80vh",
-            }}
-          >
+        <div className="history-overlay" role="dialog" aria-modal="true" aria-label="Trip history">
+          <div className="history-modal">
             <div className="history-header">
               <div>
-                <div className="section-title" style={{ marginBottom: 0, border: 0 }}>
-                  <History size={19} /> Monthly Trip History
+                <div className="history-title">
+                  <History size={19} /> Trip History
                 </div>
-                <div style={{ color: "#666", fontSize: 13 }}>
+                <div className="history-meta">
                   {filteredHistory.length} record(s) · {money(historyTotal)}
                 </div>
               </div>
@@ -1550,12 +1867,12 @@ function TripSheet() {
               </button>
             </div>
 
-            <div className="history-tools" style={{ marginTop: 15 }}>
+            <div className="history-tools">
               <input
                 type="month"
                 value={historyMonth}
                 onChange={(e) => setHistoryMonth(e.target.value)}
-                style={{ maxWidth: 180 }}
+                className="history-month"
               />
               <div className="searchbox">
                 <Search size={16} />
