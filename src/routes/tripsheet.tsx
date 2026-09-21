@@ -323,13 +323,13 @@ function TripSheet() {
   const [showOwnerLogin, setShowOwnerLogin] = useState(false);
   const [ownerUnlocked, setOwnerUnlocked] = useState(false);
   const [ownerPinInput, setOwnerPinInput] = useState("");
-  const [ownerPin, setOwnerPin] = useState(() => localStorage.getItem("rajputri_owner_pin") || "2580");
+  const [ownerPin, setOwnerPin] = useState(() => (typeof window !== "undefined" ? window.localStorage.getItem("rajputri_owner_pin") || "2580" : "2580"));
   const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
   const [newOwnerPin, setNewOwnerPin] = useState("");
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setHistory(parsed);
@@ -341,7 +341,7 @@ function TripSheet() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
     } catch {
       // Ignore storage errors.
     }
@@ -466,7 +466,7 @@ function TripSheet() {
       window.alert("Owner PIN 4 முதல் 8 இலக்கங்கள் இருக்க வேண்டும்.");
       return;
     }
-    localStorage.setItem("rajputri_owner_pin", pin);
+    window.localStorage.setItem("rajputri_owner_pin", pin);
     setOwnerPin(pin);
     setNewOwnerPin("");
     window.alert("Owner PIN மாற்றப்பட்டது.");
