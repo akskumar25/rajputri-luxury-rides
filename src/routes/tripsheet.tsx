@@ -1488,119 +1488,319 @@ function TripSheet() {
           .history-item { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 600px) {
-          .topbar {
-            align-items: stretch;
-            flex-direction: column;
-            gap: 8px;
-            padding: 9px 12px;
-          }
 
-          .brand {
-            min-width: 0;
-          }
+  /* ===== MOBILE RESPONSIVE FIX ===== */
 
-          .brand-title {
-            font-size: 19px;
-          }
+  html,
+  body,
+  .trip-app {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
 
-          .toolbar {
-            width: 100%;
-            justify-content: flex-start;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            padding-bottom: 2px;
-            scrollbar-width: thin;
-          }
+  .topbar {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    min-height: auto;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    overflow: hidden;
+  }
 
-          .toolbar .btn {
-            flex: 0 0 auto;
-            min-height: 40px;
-            padding: 8px 11px;
-            font-size: 12px;
-          }
+  .brand {
+    width: 100%;
+    min-width: 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-          .container {
-            padding: 12px 10px 30px;
-          }
+  .brand-title {
+    font-size: 18px;
+    line-height: 1;
+  }
 
-          .notice {
-            grid-template-columns: 1fr;
-            gap: 10px;
-            padding: 14px;
-          }
+  .brand-sub {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+  }
 
-          .notice-flow {
-            white-space: normal;
-            flex-wrap: wrap;
-          }
+  /* Mobile action buttons */
+  .toolbar {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: hidden !important;
+    padding: 0;
+  }
 
-          .notice-flow span {
-            padding: 6px 8px;
-          }
+  .toolbar .btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    height: 38px;
+    padding: 6px 7px;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    gap: 5px;
+  }
 
-          .grid, .grid.two, .charge-grid {
-            grid-template-columns: 1fr;
-          }
+  .toolbar .btn svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+  }
 
-          .rental-head {
-            align-items: flex-start;
-            flex-direction: column;
-          }
+  .container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px 8px 26px;
+    overflow: hidden;
+  }
 
-          .rental-rules {
-            grid-template-columns: 1fr;
-          }
+  .notice {
+    width: 100%;
+    max-width: 100%;
+    display: block;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 11px;
+    overflow: hidden;
+  }
 
-          .distance-live {
-            align-items: flex-start;
-            flex-direction: column;
-            justify-content: center;
-            gap: 2px;
-          }
+  .notice-title {
+    font-size: 11px;
+  }
 
-          .distance-live strong {
-            font-size: 17px;
-          }
+  .notice-copy {
+    font-size: 12px;
+    line-height: 1.45;
+  }
 
-          .total-box {
-            align-items: flex-start;
-            flex-direction: column;
-          }
+  .notice-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 9px;
+    white-space: normal;
+  }
 
-          .total {
-            font-size: 24px;
-          }
+  .notice-flow span {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
 
-          .history-overlay {
-            padding: 8px;
-          }
+  /* All form cards */
+  .card {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 10px;
+    padding: 13px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-          .history-modal {
-            padding: 12px;
-            border-radius: 14px;
-          }
+  .section-title {
+    font-size: 15px;
+    margin-bottom: 11px;
+    padding-bottom: 9px;
+  }
 
-          .history-header {
-            align-items: flex-start;
-          }
+  /* One-column mobile form */
+  .grid,
+  .grid.two,
+  .charge-grid {
+    width: 100%;
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
 
-          .history-tools {
-            width: 100%;
-          }
+  .field {
+    width: 100%;
+    min-width: 0;
+  }
 
-          .history-month {
-            max-width: none;
-            width: 100%;
-          }
+  .field > span,
+  .charge-field > span {
+    font-size: 10px;
+  }
 
-          .searchbox, .searchbox input {
-            width: 100%;
-          }
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    height: auto;
+    padding: 10px 11px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
 
-          .history-item {
-            grid-template-columns: 1fr;
-          }
-        }
+  textarea {
+    min-height: 75px;
+  }
+
+  /* Rental section */
+  .rental-box {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+  }
+
+  .rental-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .rental-head strong {
+    font-size: 17px;
+  }
+
+  .rental-price {
+    font-size: 21px;
+  }
+
+  .rental-rules {
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+  }
+
+  .rental-rule {
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  /* Distance */
+  .distance-live {
+    width: 100%;
+    min-height: 42px;
+    padding: 7px 10px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .distance-live strong {
+    font-size: 16px;
+  }
+
+  .distance-live small {
+    font-size: 9px;
+  }
+
+  /* Total */
+  .total-box {
+    width: 100%;
+    padding: 12px 13px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+    border-radius: 10px;
+  }
+
+  .total {
+    font-size: 23px;
+  }
+
+  /* Bottom action buttons */
+  .action-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .action-row .btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 8px;
+    font-size: 11px;
+    justify-content: center;
+  }
+
+  /* History */
+  .history-overlay {
+    padding: 7px;
+    overflow-x: hidden;
+  }
+
+  .history-modal {
+    width: 100%;
+    max-width: 100%;
+    padding: 11px;
+    border-radius: 12px;
+    overflow-x: hidden;
+  }
+
+  .history-header {
+    align-items: flex-start;
+  }
+
+  .history-tools {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .history-month,
+  .searchbox,
+  .searchbox input {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .history-item {
+    width: 100%;
+    grid-template-columns: 1fr !important;
+    gap: 7px;
+    padding: 10px;
+  }
+
+  /* Owner dashboard */
+  .owner-expense-grid,
+  .owner-mini-summary,
+  .audit-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .owner-settings {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .owner-pin-change {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Prevent accidental horizontal overflow */
+  .trip-app *,
+  .trip-app *::before,
+  .trip-app *::after {
+    max-width: 100%;
+  }
+}
 
         @media (max-width: 760px) {
           .owner-expense-grid, .owner-mini-summary, .audit-grid { grid-template-columns:1fr; }
