@@ -307,7 +307,7 @@ function TripSheet() {
         : 0;
 
     const daysByHours = hours > 0 ? Math.ceil(hours / 12) : 1;
-    const daysByKm = totalKm > 0 ? Math.ceil(totalKm / 220) : 1;
+    const daysByKm = totalKm > 0 ? Math.ceil(totalKm / 200) : 1;
 
     return Math.max(1, daysByHours, daysByKm);
   }, [trip.tripType, trip.date, trip.endDate, trip.reportingTime, trip.releaseTime, totalKm]);
@@ -368,7 +368,7 @@ function TripSheet() {
                 ? (end.getTime() - start.getTime()) / 3600000
                 : 0;
             const byHours = hours > 0 ? Math.ceil(hours / 12) : 1;
-            const byKm = km > 0 ? Math.ceil(km / 220) : 1;
+            const byKm = km > 0 ? Math.ceil(km / 200) : 1;
             return DAILY_RENTAL * Math.max(1, byHours, byKm);
           })()
         : numberValue(item.vehicleCharge);
@@ -887,6 +887,38 @@ function TripSheet() {
         .money-input { display: flex; align-items: center; border: 1px solid #cfcfcf; border-radius: 8px; overflow: hidden; }
         .money-input > span { padding-left: 10px; color: #666; }
         .money-input input { border: 0; border-radius: 0; }
+        .distance-result {
+          position: relative;
+        }
+
+        .distance-live {
+          min-height: 46px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          padding: 8px 13px;
+          border: 1px solid #c9a227;
+          border-radius: 9px;
+          background: linear-gradient(135deg, #fffdf4, #f7f2df);
+          color: #162238;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+        }
+
+        .distance-live strong {
+          color: #8a680d;
+          font-size: 18px;
+          font-weight: 900;
+          letter-spacing: .2px;
+        }
+
+        .distance-live small {
+          color: #737b88;
+          font-size: 10px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
         .total-box {
           display: flex; align-items: center; justify-content: space-between; gap: 20px;
           padding: 16px 18px; background: #111; color: white; border-radius: 12px;
@@ -1238,6 +1270,17 @@ function TripSheet() {
 
           .rental-rules {
             grid-template-columns: 1fr;
+          }
+
+          .distance-live {
+            align-items: flex-start;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+          }
+
+          .distance-live strong {
+            font-size: 17px;
           }
 
           .total-box {
@@ -1663,26 +1706,26 @@ function TripSheet() {
               <div className="rental-rules">
                 <div className="rental-rule">
                   <b>1 DAY</b>
-                  12 HOURS OR 200 KM
+                  12 HOURS / 200 KM
                 </div>
                 <div className="rental-rule">
-                  <b>GRACE KM</b>
-                  200 KM + 20 KM FREE
+                  <b>DAILY LIMIT</b>
+                  Up to 200 KM
                 </div>
                 <div className="rental-rule">
-                  <b>LIMIT</b>
-                  Up to 220 KM
+                  <b>ABOVE 200 KM</b>
+                  Additional day applies
                 </div>
                 <div className="rental-rule">
-                  <b>220 KM+</b>
-                  Next day rental ₹2,000 applies
+                  <b>PACKAGE</b>
+                  ₹2,000 / DAY
                 </div>
               </div>
 
               <div className="terms">
                 Fuel, Toll, Parking, Permit and other applicable charges are payable by the
-                customer. Rental calculation is based on the 12-hour / 200 KM package rule;
-                20 KM grace is allowed beyond 200 KM.
+                customer. Rental calculation is based on the 12-hour / 200 KM package rule.
+                Beyond 200 KM, the next rental day charge applies.
               </div>
             </div>
           )}
@@ -1765,9 +1808,12 @@ function TripSheet() {
               type="number"
               onChange={(v) => update("closeKm", v)}
             />
-            <div className="field">
+            <div className="field distance-result">
               <span>Total Distance</span>
-              <input value={`${totalKm} KM`} readOnly />
+              <div className="distance-live">
+                <strong>{totalKm.toLocaleString("en-IN")} KM</strong>
+                <small>Close KM − Start KM</small>
+              </div>
             </div>
             <div className="field">
               <span>Rental Days</span>
@@ -2002,9 +2048,8 @@ function TripSheet() {
               <div className="p-rental-lines">
                 <b>One Day Rental = 12 Hours or 200 KM.</b> Fixed package charge; lower KM does not reduce
                 the daily rental charge and KM-based calculation does not apply.
-                After 200 KM, up to 20 additional KM is free. Beyond 220 KM, next day rental charge
-                of ₹2,000 applies. Fuel, Toll, Parking, Permit and other applicable charges are payable
-                by the customer.
+                Beyond 200 KM, the next rental day charge of ₹2,000 applies. Fuel, Toll, Parking,
+                Permit and other applicable charges are payable by the customer.
               </div>
             </div>
           )}
