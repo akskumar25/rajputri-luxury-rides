@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rajputri Tripsheet</string>
+    <string name="title_activity_main">Rajputri Tripsheet</string>
+    <string name="package_name">com.rajputritravels.tripsheet</string>
+    <string name="custom_url_scheme">com.rajputritravels.tripsheet</string>
+</resources>
