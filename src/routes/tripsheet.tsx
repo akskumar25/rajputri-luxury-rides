@@ -6,13 +6,8 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
-  Fuel,
   History,
   IndianRupee,
-  BarChart3,
-  TrendingUp,
-  WalletCards,
-  Wrench,
   MapPin,
   MessageCircle,
   Phone,
@@ -59,16 +54,12 @@ type Trip = {
   parking: string;
   permit: string;
   driverBata: string;
-  fuelExpense: string;
-  maintenanceExpense: string;
-  vehicleOtherExpense: string;
   other: string;
   notes: string;
 };
 
 const STORAGE_KEY = "rajputri_trip_history_v4";
 const DAILY_RENTAL = 2700;
-const DRIVER_SALARY_PER_DAY = 700;
 
 const todayString = () => {
   const d = new Date();
@@ -137,9 +128,6 @@ const createTrip = (tripNo = "RT-0001"): Trip => ({
   parking: "",
   permit: "",
   driverBata: "",
-  fuelExpense: "",
-  maintenanceExpense: "",
-  vehicleOtherExpense: "",
   other: "",
   notes: "",
 });
@@ -376,29 +364,13 @@ function TripSheet() {
   const toll = numberValue(trip.toll);
   const parking = numberValue(trip.parking);
   const permit = numberValue(trip.permit);
-  const driverBataInput = numberValue(trip.driverBata);
-  const driverCost =
-    driverBataInput > 0
-      ? driverBataInput
-      : trip.tripType === "Full Day Rental"
-        ? rentalDays * DRIVER_SALARY_PER_DAY
-        : 0;
-  const driverBata = driverCost;
-  const fuelExpense = numberValue(trip.fuelExpense);
-  const maintenanceExpense = numberValue(trip.maintenanceExpense);
-  const vehicleOtherExpense = numberValue(trip.vehicleOtherExpense);
+  const driverBata = numberValue(trip.driverBata);
   const other = numberValue(trip.other);
 
   const grandTotal =
     trip.tripType === "Full Day Rental"
-      ? rentalAmount + toll + parking + permit + driverCost + other
-      : regularVehicleCharge + toll + parking + permit + driverCost + other;
-
-  const tripOperatingExpense =
-    driverCost + fuelExpense + maintenanceExpense + vehicleOtherExpense + toll + parking + permit + other;
-  const tripOperatingProfit =
-    (trip.tripType === "Full Day Rental" ? rentalAmount : regularVehicleCharge) -
-    (driverCost + fuelExpense + maintenanceExpense + vehicleOtherExpense);
+      ? rentalAmount + toll + parking + permit + driverBata + other
+      : regularVehicleCharge + toll + parking + permit + driverBata + other;
 
   const filteredHistory = useMemo(() => {
     const q = historySearch.trim().toLowerCase();
@@ -422,96 +394,41 @@ function TripSheet() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [history, historyMonth, historySearch]);
 
-  const monthlyAudit = useMemo(() => {
-    return filteredHistory.reduce(
-      (acc, item) => {
-        const startKm = numberValue(item.startKm);
-        const closeKm = numberValue(item.closeKm);
-        const km = closeKm > startKm ? closeKm - startKm : 0;
+  const historyTotal = filteredHistory.reduce((sum, item) => {
+    const km =
+      numberValue(item.closeKm) > numberValue(item.startKm)
+        ? numberValue(item.closeKm) - numberValue(item.startKm)
+        : 0;
 
-        let days = 1;
-        if (item.tripType === "Full Day Rental") {
-          const start = new Date(`${item.date}T${item.reportingTime || "00:00"}`);
-          const end = new Date(
-            `${item.endDate || item.date}T${item.releaseTime || "00:00"}`
-          );
-          const hours =
-            end.getTime() > start.getTime()
-              ? (end.getTime() - start.getTime()) / 3600000
-              : 0;
-          const byHours = hours > 0 ? Math.ceil(hours / 12) : 1;
-          const byKm = km > 0 ? Math.ceil(km / 200) : 1;
-          days = Math.max(1, byHours, byKm);
-        }
+    const rental =
+      item.tripType === "Full Day Rental"
+        ? (() => {
+            const start = new Date(
+              `${item.date}T${item.reportingTime || "00:00"}`
+            );
+            const end = new Date(
+              `${item.endDate || item.date}T${item.releaseTime || "00:00"}`
+            );
+            const hours =
+              end.getTime() > start.getTime()
+                ? (end.getTime() - start.getTime()) / 3600000
+                : 0;
+            const byHours = hours > 0 ? Math.ceil(hours / 12) : 1;
+            const byKm = km > 0 ? Math.ceil(km / 200) : 1;
+            return DAILY_RENTAL * Math.max(1, byHours, byKm);
+          })()
+        : numberValue(item.vehicleCharge);
 
-        const baseRevenue =
-          item.tripType === "Full Day Rental"
-            ? days * DAILY_RENTAL
-            : numberValue(item.vehicleCharge);
-
-        const driverInput = numberValue(item.driverBata);
-        const driverCost =
-          driverInput > 0
-            ? driverInput
-            : item.tripType === "Full Day Rental"
-              ? days * DRIVER_SALARY_PER_DAY
-              : 0;
-
-        const fuel = numberValue(item.fuelExpense);
-        const maintenance = numberValue(item.maintenanceExpense);
-        const vehicleOther = numberValue(item.vehicleOtherExpense);
-        const toll = numberValue(item.toll);
-        const parking = numberValue(item.parking);
-        const permit = numberValue(item.permit);
-        const other = numberValue(item.other);
-
-        const customerBilling =
-          baseRevenue + toll + parking + permit + driverCost + other;
-
-        const operatingExpense =
-          driverCost + fuel + maintenance + vehicleOther + toll + parking + permit + other;
-
-        const operatingProfit =
-          baseRevenue - driverCost - fuel - maintenance - vehicleOther;
-
-        acc.customerBilling += customerBilling;
-        acc.baseRevenue += baseRevenue;
-        acc.driverSalary += driverCost;
-        acc.fuel += fuel;
-        acc.maintenance += maintenance;
-        acc.vehicleOther += vehicleOther;
-        acc.toll += toll;
-        acc.parking += parking;
-        acc.permit += permit;
-        acc.other += other;
-        acc.operatingExpense += operatingExpense;
-        acc.operatingProfit += operatingProfit;
-        acc.totalKm += km;
-        acc.tripCount += 1;
-        acc.rentalDays += item.tripType === "Full Day Rental" ? days : 0;
-        return acc;
-      },
-      {
-        customerBilling: 0,
-        baseRevenue: 0,
-        driverSalary: 0,
-        fuel: 0,
-        maintenance: 0,
-        vehicleOther: 0,
-        toll: 0,
-        parking: 0,
-        permit: 0,
-        other: 0,
-        operatingExpense: 0,
-        operatingProfit: 0,
-        totalKm: 0,
-        tripCount: 0,
-        rentalDays: 0,
-      }
+    return (
+      sum +
+      rental +
+      numberValue(item.toll) +
+      numberValue(item.parking) +
+      numberValue(item.permit) +
+      numberValue(item.driverBata) +
+      numberValue(item.other)
     );
   }, [filteredHistory]);
-
-  const historyTotal = monthlyAudit.customerBilling;
 
   const generateTripNo = () => {
     const max = history.reduce((n, item) => {
@@ -525,11 +442,6 @@ function TripSheet() {
     const tripToSave: Trip = {
       ...trip,
       tripNo: trip.tripNo || generateTripNo(),
-      driverBata:
-        trip.driverBata ||
-        (trip.tripType === "Full Day Rental"
-          ? String(rentalDays * DRIVER_SALARY_PER_DAY)
-          : ""),
     };
 
     setTrip(tripToSave);
@@ -1821,17 +1733,6 @@ function TripSheet() {
           .print-sheet svg { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
-         @media (max-width: 900px) {
-           .audit-kpis { grid-template-columns:repeat(2,1fr); }
-           .audit-breakdown { grid-template-columns:repeat(2,1fr); }
-         }
-         @media (max-width: 560px) {
-           .audit-heading { align-items:flex-start; flex-direction:column; }
-           .audit-profit { text-align:left; }
-           .audit-kpis { grid-template-columns:1fr; }
-           .audit-breakdown { grid-template-columns:1fr; }
-         }
-
       `}</style>
 
       <header className="topbar">
@@ -2109,24 +2010,9 @@ function TripSheet() {
               onChange={(v) => update("permit", v)}
             />
             <ChargeField
-              label="Driver Salary / Bata"
+              label="Driver Bata"
               value={trip.driverBata}
               onChange={(v) => update("driverBata", v)}
-            />
-            <ChargeField
-              label="Fuel Expense"
-              value={trip.fuelExpense}
-              onChange={(v) => update("fuelExpense", v)}
-            />
-            <ChargeField
-              label="Maintenance"
-              value={trip.maintenanceExpense}
-              onChange={(v) => update("maintenanceExpense", v)}
-            />
-            <ChargeField
-              label="Vehicle Other Expense"
-              value={trip.vehicleOtherExpense}
-              onChange={(v) => update("vehicleOtherExpense", v)}
             />
             <ChargeField
               label="Other"
@@ -2195,64 +2081,7 @@ function TripSheet() {
             </div>
 
             {filteredHistory.length ? (
-              <>
-                <div className="audit-dashboard">
-                  <div className="audit-heading">
-                    <div>
-                      <div className="audit-title"><BarChart3 size={19} /> MONTHLY BUSINESS AUDIT</div>
-                      <div className="audit-subtitle">
-                        {historyMonth || "All months"} · {monthlyAudit.tripCount} trips · {monthlyAudit.totalKm.toLocaleString("en-IN")} KM
-                      </div>
-                    </div>
-                    <div className="audit-profit">
-                      <small>OPERATING PROFIT</small>
-                      <strong>{money(monthlyAudit.operatingProfit)}</strong>
-                    </div>
-                  </div>
-
-                  <div className="audit-kpis">
-                    <div className="audit-kpi income">
-                      <span><TrendingUp size={16} /> CUSTOMER BILLING</span>
-                      <strong>{money(monthlyAudit.customerBilling)}</strong>
-                    </div>
-                    <div className="audit-kpi">
-                      <span><WalletCards size={16} /> TRIP REVENUE</span>
-                      <strong>{money(monthlyAudit.baseRevenue)}</strong>
-                    </div>
-                    <div className="audit-kpi expense">
-                      <span><UserRound size={16} /> DRIVER SALARY</span>
-                      <strong>{money(monthlyAudit.driverSalary)}</strong>
-                    </div>
-                    <div className="audit-kpi expense">
-                      <span><Fuel size={16} /> FUEL</span>
-                      <strong>{money(monthlyAudit.fuel)}</strong>
-                    </div>
-                    <div className="audit-kpi expense">
-                      <span><Wrench size={16} /> MAINTENANCE</span>
-                      <strong>{money(monthlyAudit.maintenance)}</strong>
-                    </div>
-                    <div className="audit-kpi expense">
-                      <span><Car size={16} /> VEHICLE OTHER</span>
-                      <strong>{money(monthlyAudit.vehicleOther)}</strong>
-                    </div>
-                  </div>
-
-                  <div className="audit-breakdown">
-                    <div><span>Toll</span><b>{money(monthlyAudit.toll)}</b></div>
-                    <div><span>Parking</span><b>{money(monthlyAudit.parking)}</b></div>
-                    <div><span>Permit</span><b>{money(monthlyAudit.permit)}</b></div>
-                    <div><span>Other</span><b>{money(monthlyAudit.other)}</b></div>
-                    <div><span>Total Operating Expense</span><b>{money(monthlyAudit.operatingExpense)}</b></div>
-                  </div>
-
-                  <div className="audit-note">
-                    <b>Audit view:</b> Trip Revenue − Driver Salary − Fuel − Maintenance − Vehicle Other = Operating Profit.
-                    Toll / Parking / Permit / Other are shown separately as billed or pass-through amounts.
-                    Fixed monthly costs such as EMI, insurance, tax and office expenses can be added as a separate monthly expense ledger in the next step.
-                  </div>
-                </div>
-
-                <div className="history-list">
+              <div className="history-list">
                 {filteredHistory.map((item) => {
                   const km =
                     numberValue(item.closeKm) > numberValue(item.startKm)
@@ -2295,8 +2124,7 @@ function TripSheet() {
                     </div>
                   );
                 })}
-                </div>
-              </>
+              </div>
             ) : (
               <div className="empty">இந்த மாதத்திற்கு Trip History இல்லை.</div>
             )}
