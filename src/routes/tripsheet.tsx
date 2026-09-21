@@ -430,6 +430,27 @@ function TripSheet() {
     };
   };
 
+  const filteredHistory = useMemo(() => {
+    const q = historySearch.trim().toLowerCase();
+    return history
+      .filter((item) => !historyMonth || item.date.startsWith(historyMonth))
+      .filter((item) => {
+        if (!q) return true;
+        return [
+          item.tripNo,
+          item.customerName,
+          item.customerMobile,
+          item.pickup,
+          item.drop,
+          item.vehicleNo,
+          item.tripType,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q);
+      })
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [history, historyMonth, historySearch]);
   const auditSummary = useMemo(() => filteredHistory.reduce(
     (acc, item) => {
       const a = getTripAudit(item);
@@ -472,27 +493,6 @@ function TripSheet() {
     window.alert("Owner PIN மாற்றப்பட்டது.");
   };
 
-  const filteredHistory = useMemo(() => {
-    const q = historySearch.trim().toLowerCase();
-    return history
-      .filter((item) => !historyMonth || item.date.startsWith(historyMonth))
-      .filter((item) => {
-        if (!q) return true;
-        return [
-          item.tripNo,
-          item.customerName,
-          item.customerMobile,
-          item.pickup,
-          item.drop,
-          item.vehicleNo,
-          item.tripType,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(q);
-      })
-      .sort((a, b) => b.date.localeCompare(a.date));
-  }, [history, historyMonth, historySearch]);
 
   const historyTotal = filteredHistory.reduce((sum, item) => {
     const km =
