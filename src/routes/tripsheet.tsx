@@ -483,14 +483,32 @@ function TripSheet() {
 
   const saveOwnerPin = () => {
     const pin = newOwnerPin.trim();
+
     if (!/^\d{4,8}$/.test(pin)) {
       window.alert("Owner PIN 4 முதல் 8 இலக்கங்கள் இருக்க வேண்டும்.");
       return;
     }
-    window.localStorage.setItem("rajputri_owner_pin", pin);
-    setOwnerPin(pin);
-    setNewOwnerPin("");
-    window.alert("Owner PIN மாற்றப்பட்டது.");
+
+    try {
+      // Save the new PIN first.
+      window.localStorage.setItem("rajputri_owner_pin", pin);
+
+      // Read it back immediately so we know the browser actually saved it.
+      const savedPin = window.localStorage.getItem("rajputri_owner_pin");
+
+      if (savedPin !== pin) {
+        window.alert("புதிய PIN சேமிக்கப்படவில்லை. Browser storage அனுமதியை சரிபார்க்கவும்.");
+        return;
+      }
+
+      // Update React state too, so the current session immediately uses the new PIN.
+      setOwnerPin(savedPin);
+      setNewOwnerPin("");
+      window.alert("Owner PIN வெற்றிகரமாக மாற்றப்பட்டது.");
+    } catch (error) {
+      console.error("Owner PIN save error:", error);
+      window.alert("PIN சேமிக்க முடியவில்லை. Browser storage அனுமதியை சரிபார்க்கவும்.");
+    }
   };
 
 
