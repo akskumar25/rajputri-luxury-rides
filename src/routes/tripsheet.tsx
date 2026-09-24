@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
-  History,
+  ஹிச்டோரி,
   IndianRupee,
   LockKeyhole,
   MapPin,
